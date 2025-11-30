@@ -146,3 +146,18 @@ export const useGetUser = (userId: number) => {
     },
   });
 };
+
+export const loginUser = async ({ email, password }: any) => {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const errorBody = await res.json(); // Assuming error response is also JSON
+    throw new Error(errorBody.message || 'Error en el login');
+  }
+  return res.json();
+};

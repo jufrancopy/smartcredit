@@ -24,7 +24,9 @@
     "nodemailer": "^7.0.11",
     "prisma": "^6.18.0",
     "react-query": "^3.39.3",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "bcryptjs": "^2.4.3",
+    "@types/bcryptjs": "^2.4.6"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",

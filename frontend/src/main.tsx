@@ -7,6 +7,7 @@ import CreateLoanForm from './components/CreateLoanForm'
 import CreateUserForm from './components/CreateUserForm'
 import ClientPaymentView from './components/ClientPaymentView'
 import LoginForm from './components/LoginForm'
+import AdminLoginForm from './components/AdminLoginForm'
 
 import './index.css'
 
@@ -22,7 +23,7 @@ function App() {
       return 'dashboard';
     }
     return 'login';
-  }); // 'dashboard', 'createLoan', 'createClient', 'clientPayments', or 'login'
+  }); // 'dashboard', 'createLoan', 'createClient', 'clientPayments', 'login', or 'adminLogin'
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [userId, setUserId] = useState<number | null>(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -94,7 +95,25 @@ function App() {
               )}
             </>
           ) : (
-            <h1 className="text-xl font-bold text-gray-800">AhorraConmigo</h1>
+            <div className="flex justify-center items-center space-x-4">
+              <h1 className="text-xl font-bold text-gray-800">AhorraConmigo</h1>
+              {view === 'login' && (
+                <button
+                  onClick={() => setView('adminLogin')}
+                  className="px-4 py-2 rounded-md text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                >
+                  Acceso Administrador
+                </button>
+              )}
+              {view === 'adminLogin' && (
+                <button
+                  onClick={() => setView('login')}
+                  className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Acceso Usuarios/Cobradores
+                </button>
+              )}
+            </div>
           )}
           {token && (
             <button
@@ -115,7 +134,11 @@ function App() {
             {view === 'clientPayments' && userId && <ClientPaymentView userId={userId} />}
           </>
         ) : (
-          <LoginForm onLoginSuccess={handleLoginSuccess} />
+          view === 'adminLogin' ? (
+            <AdminLoginForm onLoginSuccess={handleLoginSuccess} />
+          ) : (
+            <LoginForm onLoginSuccess={handleLoginSuccess} />
+          )
         )}
       </main>
     </div>

@@ -53,11 +53,11 @@ async function main() {
     data: {
       email: 'jucfra23@gmail.com',
       password: hashedPassword,
-      nombre: 'Maria',
-      apellido: 'Gomez',
+      nombre: 'Maria Graciela',
+      apellido: 'Baez',
       cedula: '7654321',
       fecha_nacimiento: new Date('1995-05-10'),
-      tipo_comercio: 'Vendedora Ambulante',
+      tipo_comercio: 'Luque - Isla Bogado',
       whatsapp: '595981654321',
       role: 'deudor',
     },
@@ -65,13 +65,13 @@ async function main() {
 
   const debtor2 = await prisma.user.create({
     data: {
-      email: 'debtor2@example.com',
+      email: 'filoartepy@gmail.com',
       password: hashedPassword,
-      nombre: 'Carlos',
-      apellido: 'Lopez',
+      nombre: 'Rocio Liliana',
+      apellido: 'Paniagua Báez',
       cedula: '9876543',
       fecha_nacimiento: new Date('1988-11-20'),
-      tipo_comercio: 'Electricista',
+      tipo_comercio: 'Luque - Isla Bogado',
       whatsapp: '595981987654',
       role: 'deudor',
     },
