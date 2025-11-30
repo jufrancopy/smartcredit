@@ -6,9 +6,9 @@ import UploadReceipt from './UploadReceipt';
 const getReceiptImageUrl = (comprobante_url: string): string => {
   if (!comprobante_url) return '';
   if (comprobante_url.startsWith('/uploads/photos/')) {
-    return `http://localhost:3000${comprobante_url}`;
+    return `${import.meta.env.VITE_API_BASE_URL}${comprobante_url}`;
   }
-  return `http://localhost:3000/uploads/photos/${comprobante_url}`;
+  return `${import.meta.env.VITE_API_BASE_URL}/uploads/photos/${comprobante_url}`;
 };
 
 interface ClientPaymentViewProps {
