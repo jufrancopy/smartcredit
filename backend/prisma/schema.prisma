@@ -1,0 +1,104 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String?   @unique
+  password        String?
+  nombre          String
+  apellido        String
+  cedula          String   @unique
+  fecha_nacimiento DateTime
+  tipo_comercio   String
+  foto_url        String?
+  whatsapp        String   @unique
+  role            Role     @default(deudor)
+  loans           Loan[]
+  payments        Payment[]
+  riskEvents      RiskEvent[]
+  createdAt       DateTime @default(now())
+  fondo_acumulado Float    @default(0)
+  updatedAt       DateTime @updatedAt
+}
+
+model Loan {
+  id                    Int           @id @default(autoincrement())
+  user                  User          @relation(fields: [userId], references: [id])
+  userId                Int
+  monto_principal       Float
+  interes_total_percent Float
+  total_a_devolver      Float
+  plazo_dias            Int
+  fecha_otorgado        DateTime
+  fecha_inicio_cobro    DateTime
+  estado                LoanStatus    @default(activo)
+  riesgo_score          Float?
+  installments          Installment[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model Installment {
+  id            Int             @id @default(autoincrement())
+  loan          Loan            @relation(fields: [loanId], references: [id])
+  loanId        Int
+  fecha         DateTime
+  monto_expected Float
+  monto_pagado  Float           @default(0)
+  status        InstallmentStatus @default(pendiente)
+  recibo_url    String?
+  cobrador_id   Int?
+  payments      Payment[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Payment {
+  id              Int         @id @default(autoincrement())
+  installment     Installment @relation(fields: [installmentId], references: [id])
+  installmentId   Int
+  user            User        @relation(fields: [userId], references: [id])
+  userId          Int
+  monto           Float
+  comprobante_url String?
+  confirmado      Boolean     @default(false)
+  confirmado_por  Int?
+  comentario      String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model RiskEvent {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  evento      String
+  score_impact Float
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  deudor
+  cobrador
+  admin
+}
+
+enum LoanStatus {
+  activo
+  finiquitado
+  moroso
+  cancelado
+}
+
+enum InstallmentStatus {
+  pendiente
+  pagado
+  parcial
+  vencido
+}
