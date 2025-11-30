@@ -3,9 +3,11 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
-  datasource: {
-    url: process.env.DATABASE_URL,
-    adapter: 'postgresql',
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+      adapter: 'postgresql',
+    },
   },
 });
 

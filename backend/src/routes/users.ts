@@ -13,9 +13,11 @@ interface AuthRequest extends Request {
 
 const router = Router();
 const prisma = new PrismaClient({
-  datasource: {
-    url: process.env.DATABASE_URL,
-    adapter: 'postgresql',
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+      adapter: 'postgresql',
+    },
   },
 });
 
