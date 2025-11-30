@@ -23,7 +23,12 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasource: {
+    url: process.env.DATABASE_URL,
+    adapter: 'postgresql',
+  },
+});
 
 // Upload a payment receipt
 router.post('/payments/upload', authenticateToken, upload.single('comprobante'), async (req: AuthRequest, res) => {

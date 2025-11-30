@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasource: {
+    url: process.env.DATABASE_URL,
+    adapter: 'postgresql',
+  },
+});
 
 // Extend the Request interface to include user information
 interface AuthRequest extends Request {

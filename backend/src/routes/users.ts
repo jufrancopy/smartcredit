@@ -12,7 +12,12 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasource: {
+    url: process.env.DATABASE_URL,
+    adapter: 'postgresql',
+  },
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -131,7 +136,7 @@ router.get('/users/:id/scoring', authenticateToken, async (req: AuthRequest, res
       where: { userId: parseInt(id) },
     });
 
-    const score = riskEvents.reduce((acc, event) => acc + event.score_impact, 100);
+    const score = riskEvents.reduce((acc: number, event: { score_impact: number }) => acc + event.score_impact, 100);
 
     res.json({ score });
   } catch (error) {

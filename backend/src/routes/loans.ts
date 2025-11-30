@@ -9,7 +9,12 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasource: {
+    url: process.env.DATABASE_URL,
+    adapter: 'postgresql',
+  },
+});
 
 // Flat interest rate for the loan period (e.g., 20%)
 const TOTAL_INTEREST_RATE = 0.20; 
