@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import prismaConfig from '../prisma/prisma.config'; // Import the new Prisma config
 import cors from 'cors';
 import userRoutes from './routes/users';
 import loanRoutes from './routes/loans';
@@ -9,7 +10,7 @@ import authRoutes from './routes/auth';
 
 const app = express();
 dotenv.config(); // Load environment variables
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(prismaConfig); // Pass the config to PrismaClient
 
 app.use(cors());
 app.use(express.json());
