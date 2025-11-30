@@ -676,7 +676,7 @@ const CollectorDashboard: React.FC = () => {
                       <div className="flex items-start">
                         {debtor.foto_url && (
                           <img 
-                            src={`http://localhost:3000${debtor.foto_url}`} 
+                            src={`${import.meta.env.VITE_API_BASE_URL}${debtor.foto_url}`} 
                             alt={debtor.name} 
                             className="w-16 h-16 rounded-full mr-4 border-2 border-slate-500 object-cover"
                           />
@@ -766,7 +766,7 @@ const CollectorDashboard: React.FC = () => {
                 {paymentToConfirm.comprobante_url ? (
                   <div>
                     <p className="text-slate-700 font-semibold mb-2">Comprobante:</p>
-                    <img src={`http://localhost:3000${paymentToConfirm.comprobante_url}`} alt="Comprobante de Pago" className="max-w-full h-auto rounded-lg shadow-md" />
+                    <img src={`${import.meta.env.VITE_API_BASE_URL}${paymentToConfirm.comprobante_url}`} alt="Comprobante de Pago" className="max-w-full h-auto rounded-lg shadow-md" />
                   </div>
                 ) : (
                   <p className="text-slate-700">No hay comprobante adjunto para este pago.</p>
@@ -808,7 +808,7 @@ const CollectorDashboard: React.FC = () => {
                       </div>
                       <p className="text-slate-600 mb-2">Monto: <span className="font-bold">{payment.monto.toLocaleString('es-PY')} Gs</span></p>
                       {payment.comprobante_url ? (
-                        <img src={`http://localhost:3000${payment.comprobante_url}`} alt={`Comprobante para pago ${payment.id}`} className="max-w-full h-auto rounded-lg shadow-md mt-2" />
+                        <img src={`${import.meta.env.VITE_API_BASE_URL}${payment.comprobante_url}`} alt={`Comprobante para pago ${payment.id}`} className="max-w-full h-auto rounded-lg shadow-md mt-2" />
                       ) : (
                         <p className="text-slate-500 mt-2">No hay comprobante para este pago.</p>
                       )}
