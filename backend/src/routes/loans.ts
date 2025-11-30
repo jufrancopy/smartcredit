@@ -1,6 +1,7 @@
 import { Request, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
+import { sendEmail } from '../utils/emailService';
 
 // Extend the Request interface to include user information, mirroring auth.ts
 interface AuthRequest extends Request {
@@ -9,14 +10,7 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-      adapter: 'postgresql',
-    },
-  },
-});
+const prisma = new PrismaClient();
 
 // Flat interest rate for the loan period (e.g., 20%)
 const TOTAL_INTEREST_RATE = 0.20; 
@@ -70,6 +64,29 @@ router.post('/loans', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     res.json(loan);
+
+    // Send email notification to the client
+    const client = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, nombre: true } });
+    if (client && client.email) {
+      const emailSubject = '¡Tu Préstamo Ha Sido Aprobado!';
+      const emailHtml = `
+        <p>Hola ${client.nombre},</p>
+        <p>Nos complace informarte que tu préstamo ha sido aprobado.</p>
+        <p><b>Monto Principal:</b> $${monto_principal}</p>
+        <p><b>Total a Devolver:</b> $${final_total_a_devolver}</p>
+        <p><b>Plazo:</b> ${plazo_dias} días</p>
+        <p><b>Fecha de Inicio de Cobro:</b> ${new Date(fecha_inicio_cobro).toLocaleDateString('es-ES')}</p>
+        <p>Recibirás ${plazo_dias} cuotas diarias de $${dailyAmount}.</p>
+        <p>¡Gracias por confiar en nosotros!</p>
+        <p>Atentamente,</p>
+        <p>El equipo de AhorraConmigo</p>
+      `;
+      try {
+        await sendEmail({ to: client.email, subject: emailSubject, html: emailHtml });
+      } catch (emailError) {
+        console.error('Error sending loan approval email:', emailError);
+      }
+    }
   } catch (error) {
     console.error('Error creating loan:', error);
     res.status(500).json({ error: 'Error creating loan' });

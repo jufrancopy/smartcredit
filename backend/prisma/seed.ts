@@ -4,15 +4,34 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  // Hash a default password
-  const hashedPassword = await bcrypt.hash('password123', 10)
+  // Hash a default password for regular users
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  // Hash the admin password from .env or a default
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Jcf3458435'; // Using the password you provided
+  const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
 
   // Delete all data
-  await prisma.payment.deleteMany({})
-  await prisma.installment.deleteMany({})
-  await prisma.loan.deleteMany({})
-  await prisma.riskEvent.deleteMany({})
-  await prisma.user.deleteMany({})
+  await prisma.payment.deleteMany({});
+  await prisma.installment.deleteMany({});
+  await prisma.loan.deleteMany({});
+  await prisma.riskEvent.deleteMany({});
+  await prisma.user.deleteMany({});
+
+  // Create an admin user
+  const adminUser = await prisma.user.create({
+    data: {
+      email: process.env.ADMIN_USER || 'admin',
+      password: hashedAdminPassword,
+      nombre: 'Super',
+      apellido: 'Admin',
+      cedula: '0000000',
+      fecha_nacimiento: new Date('1980-01-01'),
+      tipo_comercio: 'Administracion',
+      whatsapp: '595981000000',
+      role: 'admin',
+    },
+  });
 
   // Create a collector
   const collector = await prisma.user.create({

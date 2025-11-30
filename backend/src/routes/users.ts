@@ -12,14 +12,7 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-      adapter: 'postgresql',
-    },
-  },
-});
+const prisma = new PrismaClient();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
