@@ -47,7 +47,7 @@ router.post('/users', authenticateToken, upload.single('foto'), async (req: Auth
         tipo_comercio,
         foto_url,
         whatsapp,
-        role: role.toLowerCase(),
+        role: role ? role.toLowerCase() : undefined,
         email,
         password: hashedPassword,
       },
