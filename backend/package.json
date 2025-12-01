@@ -26,7 +26,9 @@
     "react-query": "^3.39.3",
     "ts-node": "^10.9.2",
     "bcryptjs": "^2.4.3",
-    "@types/bcryptjs": "^2.4.6"
+    "@types/bcryptjs": "^2.4.6",
+    "jsonwebtoken": "^9.0.2",
+    "@types/jsonwebtoken": "^9.0.6"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",
