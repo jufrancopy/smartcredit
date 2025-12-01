@@ -8,7 +8,7 @@ import path from 'path';
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'backend/uploads/photos/');
+    cb(null, path.join(__dirname, '..', '..', 'uploads', 'photos'));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
