@@ -35,6 +35,7 @@ model Loan {
   interes_total_percent Float
   total_a_devolver      Float
   plazo_dias            Int
+  monto_diario          Float // Nuevo campo para el monto diario a pagar
   fecha_otorgado        DateTime
   fecha_inicio_cobro    DateTime
   estado                LoanStatus    @default(activo)

@@ -83,8 +83,9 @@ async function main() {
       userId: debtor1.id,
       monto_principal: 500000,
       interes_total_percent: 32,
-      total_a_devolver: 660000, // 500000 * 1.32
+      total_a_devolver: 630000, // 30000 * 21
       plazo_dias: 21,
+      monto_diario: 30000,
       fecha_otorgado: new Date('2025-11-19'),
       fecha_inicio_cobro: new Date('2025-11-20'),
       riesgo_score: 75,
@@ -92,7 +93,7 @@ async function main() {
   })
 
   // Create installments for loan1
-  const dailyAmount = 660000 / 21
+  const dailyAmount = 30000;
   const loan1StartDate = new Date('2025-11-20'); // Start date for installments
   for (let i = 0; i < 21; i++) {
     const installmentDate = new Date(loan1StartDate);
@@ -112,8 +113,9 @@ async function main() {
       userId: debtor2.id,
       monto_principal: 500000,
       interes_total_percent: 32,
-      total_a_devolver: 660000, // 500000 * 1.32
+      total_a_devolver: 630000, // 30000 * 21
       plazo_dias: 21,
+      monto_diario: 30000,
       fecha_otorgado: new Date('2025-11-19'),
       fecha_inicio_cobro: new Date('2025-11-20'),
       riesgo_score: 85,
@@ -121,7 +123,7 @@ async function main() {
   })
 
   // Create installments for loan2
-  const dailyAmount2 = 660000 / 21
+  const dailyAmount2 = 30000;
   const loan2StartDate = new Date('2025-11-20'); // Start date for installments
   for (let i = 0; i < 21; i++) {
     const installmentDate = new Date(loan2StartDate);

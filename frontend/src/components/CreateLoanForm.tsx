@@ -8,6 +8,9 @@ const CreateLoanForm: React.FC = () => {
   const [plazoDias, setPlazoDias] = useState<number>(21); // Default to 21 days
   const [fechaOtorgado, setFechaOtorgado] = useState<string>(new Date().toISOString().split('T')[0]);
   const [fechaInicioCobro, setFechaInicioCobro] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [totalADevolver, setTotalADevolver] = useState<number>(0);
+  const [montoDiario, setMontoDiario] = useState<number>(0);
+  const [displayMontoDiario, setDisplayMontoDiario] = useState<string>('');
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\./g, '');
@@ -22,9 +25,27 @@ const CreateLoanForm: React.FC = () => {
     }
   };
 
+  const handleMontoDiarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\./g, '');
+    const numericValue = parseInt(rawValue, 10);
+
+    if (isNaN(numericValue)) {
+      setMontoDiario(0);
+      setDisplayMontoDiario('');
+    } else {
+      setMontoDiario(numericValue);
+      setDisplayMontoDiario(numericValue.toLocaleString('es-PY'));
+    }
+  };
+
   useEffect(() => {
     setDisplayMonto(montoPrincipal.toLocaleString('es-PY'));
-  }, [montoPrincipal]);
+    setDisplayMontoDiario(montoDiario.toLocaleString('es-PY'));
+
+    // Recalculate totalADevolver based on new montoDiario or plazoDias
+    const calculatedTotalADevolver = montoDiario * plazoDias;
+    setTotalADevolver(calculatedTotalADevolver);
+  }, [montoPrincipal, montoDiario, plazoDias]);
 
   const { mutate: createLoan, isLoading, isSuccess, isError, error } = useCreateLoan();
   const { data: usersData } = useGetUsers();
@@ -39,6 +60,7 @@ const CreateLoanForm: React.FC = () => {
         plazo_dias: plazoDias,
         fecha_otorgado: new Date(fechaOtorgado),
         fecha_inicio_cobro: new Date(fechaInicioCobro),
+        monto_diario: montoDiario,
       });
     }
   };
@@ -134,6 +156,48 @@ const CreateLoanForm: React.FC = () => {
                       onChange={(e) => setPlazoDias(parseInt(e.target.value))}
                       className="pl-10 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                       min="1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Total a Devolver (Gs.)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7m0 2H7m10 0a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2h2m2 4H9m7-4V3m0 0H7m10 0a2 2 0 00-2-2H7a2 2 0 00-2 2v4m0 0H3m0 0V3m0 0H3" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={totalADevolver.toLocaleString('es-PY')}
+                      readOnly
+                      className="pl-10 block w-full px-4 py-3 border border-slate-300 bg-slate-50 rounded-lg shadow-sm focus:outline-none transition-all duration-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Monto Diario de Cuota (Gs.)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h10m1-6H4" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      id="montoDiario"
+                      value={displayMontoDiario}
+                      onChange={handleMontoDiarioChange}
+                      onFocus={(e) => e.target.select()}
+                      className="pl-10 block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="0"
                       required
                     />
                   </div>

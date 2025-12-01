@@ -413,7 +413,7 @@ interface Debtor {
   amountDue: number;
   installments: Installment[];
   foto_url?: string;
-  loans: { id: number; monto_principal: number }[];
+  loans: { id: number; monto_principal: number; monto_diario: number }[];
 }
 
 interface InstallmentForCollector extends Installment {
@@ -534,7 +534,7 @@ const CollectorDashboard: React.FC = () => {
       }
       
       const debtor = debtorsMap.get(loan.user.id)!;
-      debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal });
+      debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario });
       debtor.amountDue += loan.total_a_devolver - loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
       
       const processedInstallments: InstallmentForCollector[] = loan.installments.map((inst: any) => {
@@ -691,6 +691,10 @@ const CollectorDashboard: React.FC = () => {
                               <p className="text-slate-300 text-xs mb-1">Monto Prestado</p>
                               <p className="text-lg font-bold text-white">
                                 {debtor.loans.reduce((sum, l) => sum + l.monto_principal, 0).toLocaleString('es-PY')} <span className="text-sm">Gs</span>
+                              </p>
+                              <p className="text-slate-300 text-xs mb-1 mt-2">Monto Diario Total</p>
+                              <p className="text-lg font-bold text-white">
+                                {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} <span className="text-sm">Gs</span>
                               </p>
                               <p className="text-slate-300 text-xs mb-1 mt-2">Total Deuda</p>
                               <p className="text-2xl font-bold text-white">
