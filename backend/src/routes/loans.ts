@@ -108,7 +108,16 @@ router.get('/loans', authenticateToken, async (req: AuthRequest, res) => {
         },
       },
     });
-    res.json(loans);
+    const formattedLoans = loans.map(loan => ({
+      ...loan,
+      fecha_otorgado: loan.fecha_otorgado.toISOString().split('T')[0],
+      fecha_inicio_cobro: loan.fecha_inicio_cobro.toISOString().split('T')[0],
+      installments: loan.installments.map(installment => ({
+        ...installment,
+        fecha: installment.fecha.toISOString().split('T')[0],
+      })),
+    }));
+    res.json(formattedLoans);
   } catch (error) {
     res.status(500).json({ error: 'Error getting loans' });
   }

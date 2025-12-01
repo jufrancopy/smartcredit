@@ -10,8 +10,15 @@ export interface Installment {
   status: InstallmentStatus;
   monto_expected: number;
   monto_pagado: number;
-  payments: Array<{ confirmado: boolean }>;
+  payments: Array<{ 
+    id: number; // Added missing id property
+    confirmado: boolean; 
+    monto?: number; // Added missing monto property
+    comprobante_url?: string; // Added missing comprobante_url property
+  }>;
   hasUnconfirmedPayment?: boolean;
+  debtorId?: number; // Added missing properties
+  debtorName?: string;
 }
 
 interface PaymentCalendarProps {
@@ -23,6 +30,20 @@ interface PaymentCalendarProps {
 }
 
 const PaymentCalendar: React.FC<PaymentCalendarProps> = ({ installments, onOpenConfirmPaymentModal, onUploadReceipt, showUploadButton }) => {
+  // Función para formatear la fecha sin problemas de zona horaria
+  const formatDate = (dateString: string) => {
+    // Asumimos que dateString tiene formato YYYY-MM-DD
+    const parts = dateString.split('-').map(Number);
+    // El mes es 0-indexado en JavaScript (enero es 0, diciembre es 11)
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    
+    return date.toLocaleDateString('es-PY', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pagado': return 'bg-emerald-500';
@@ -66,7 +87,7 @@ const PaymentCalendar: React.FC<PaymentCalendarProps> = ({ installments, onOpenC
           <div className="flex-1">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-slate-700">
-                {new Date(inst.fecha).toLocaleDateString('es-PY', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {formatDate(inst.fecha)}
                 {inst.hasUnconfirmedPayment && (
                   <span className="ml-2 text-xs font-semibold text-orange-500"> (Pendiente Confirmación)</span>
                 )}
@@ -88,7 +109,13 @@ const PaymentCalendar: React.FC<PaymentCalendarProps> = ({ installments, onOpenC
           {onOpenConfirmPaymentModal && inst.hasUnconfirmedPayment && inst.payments.filter(p => !p.confirmado).map(payment => (
             <button
               key={payment.id}
-              onClick={() => onOpenConfirmPaymentModal(payment.id, parseInt(inst.id, 10), payment.monto, payment.comprobante_url, inst.debtorName)}
+              onClick={() => onOpenConfirmPaymentModal(
+                payment.id, 
+                parseInt(inst.id, 10), 
+                payment.monto || 0, 
+                payment.comprobante_url, 
+                inst.debtorName || 'Cliente'
+              )}
               className="ml-4 px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600 transition-colors"
             >
               Confirmar Pago
@@ -98,8 +125,12 @@ const PaymentCalendar: React.FC<PaymentCalendarProps> = ({ installments, onOpenC
           {showUploadButton && onUploadReceipt && inst.status !== 'pagado' && !inst.hasUnconfirmedPayment && (
             <button
               onClick={() => {
-                // @ts-ignore: `debtorId` and `debtorName` are only available when called from CollectorDashboard
-                onUploadReceipt(parseInt(inst.id, 10), inst.monto_expected, inst.debtorId, inst.debtorName);
+                onUploadReceipt(
+                  parseInt(inst.id, 10), 
+                  inst.monto_expected, 
+                  inst.debtorId, 
+                  inst.debtorName
+                );
               }}
               className="ml-4 px-3 py-1 bg-blue-500 text-white rounded-md text-xs hover:bg-blue-600 transition-colors"
             >
