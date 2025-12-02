@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { loginUser } from '../queries';
 
 interface LoginFormProps {
   onLoginSuccess: (token: string, userId: number, userRole: string, userName: string) => void;
@@ -11,22 +13,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState<string | null>(null);
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error de autenticación');
-      }
-
-      return response.json();
-    },
+    mutationFn: loginUser,
     onSuccess: (data) => {
       onLoginSuccess(data.token, data.user.id, data.user.role, data.user.nombre);
     },
@@ -133,7 +120,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                      </svg>
+                    </svg>
                       Ingresar
                     </>
                   )}
@@ -156,6 +143,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
                   Recupérala aquí
                 </a>
+              </p>
+              <p className="text-sm text-slate-600 mt-2">
+                ¿Eres administrador?{' '}
+                <Link to="/admin-login" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                  Inicia sesión aquí
+                </Link>
               </p>
             </div>
           </div>

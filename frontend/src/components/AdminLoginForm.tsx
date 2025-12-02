@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { loginUser } from '../queries';
+import { loginAdmin } from '../queries';
 import toast from 'react-hot-toast';
 
 interface AdminLoginFormProps {
@@ -12,7 +12,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
 
   const loginMutation = useMutation({
-    mutationFn: loginUser,
+    mutationFn: loginAdmin,
     onSuccess: (data) => {
       onLoginSuccess(data.token, data.user.id, data.user.role, data.user.nombre);
       toast.success('Login de Administrador exitoso!');

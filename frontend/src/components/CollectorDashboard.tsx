@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import UploadReceipt from './UploadReceipt';
 import { useGetLoans, useConfirmPayment } from '../queries';
+import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
 interface ElegantPaymentCalendarProps {
@@ -24,6 +26,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayDetails, setShowDayDetails] = useState(false);
   const [showAllInstallments, setShowAllInstallments] = useState(false);
+  const modalRoot = document.getElementById('modal-root');
 
   // Navegación entre meses
   const changeMonth = (direction: number) => {
@@ -106,8 +109,10 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
     setShowAllInstallments(false);
   };
 
+  if (!modalRoot) return null;
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-slate-200">
+    <div className="bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
       <div className="flex justify-between items-center mb-6">
         <button 
           onClick={() => changeMonth(-1)} 
@@ -177,7 +182,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
       </div>
 
       {/* Modal para detalles del día */}
-      {showDayDetails && selectedDate && (
+      {showDayDetails && selectedDate && ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
@@ -196,7 +201,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                 <div key={installment.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-all transform hover:scale-[1.02]">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-semibold text-slate-800">Cuota #{installment.id}</h4>
+                      <h4 className="font-semibold text-slate-800">Cuota #{installment.installmentNumber}</h4>
                       <p className="text-sm text-slate-600">{installment.debtorName}</p>
                     </div>
                     <div className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -238,12 +243,13 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                           onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName);
                           handleCloseDayDetails();
                         }}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md relative group"
+                        aria-label="Subir Comprobante"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
-                        Subir Comprobante
+                        <span className="tooltip">Subir Comprobante</span>
                       </button>
                     )}
                     {installment.hasUnconfirmedPayment && (
@@ -261,20 +267,26 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                             handleCloseDayDetails();
                           }
                         }}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors shadow-md relative group"
+                        aria-label="Confirmar Pago"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        Confirmar Pago
+                        <span className="tooltip">Confirmar Pago</span>
                       </button>
                     )}
                     {installment.payments?.some(p => p.comprobante_url) && (
                       <button
                         onClick={() => onOpenReceiptsModal(installment)}
-                        className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-2 px-4 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors shadow-md relative group"
+                        aria-label="Ver Comprobantes"
                       >
-                        Ver Comprobantes
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        <span className="tooltip">Ver Comprobantes</span>
                       </button>
                     )}
                   </div>
@@ -282,11 +294,12 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        modalRoot
       )}
 
       {/* Modal para ver todas las cuotas */}
-      {showAllInstallments && (
+      {showAllInstallments && ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
@@ -303,7 +316,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                 <div key={installment.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-all transform hover:scale-[1.02]">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-semibold text-slate-800">Cuota #{installment.id}</h4>
+                      <h4 className="font-semibold text-slate-800">Cuota #{installment.installmentNumber}</h4>
                       <p className="text-sm text-slate-600">{installment.debtorName}</p>
                       <p className="text-xs text-slate-500">
                         {new Date(installment.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -348,12 +361,13 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                           onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName);
                           handleCloseAllInstallments();
                         }}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md relative group"
+                        aria-label="Subir Comprobante"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
-                        Subir Comprobante
+                        <span className="tooltip">Subir Comprobante</span>
                       </button>
                     )}
                     {installment.hasUnconfirmedPayment && (
@@ -371,20 +385,26 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                             handleCloseAllInstallments();
                           }
                         }}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors shadow-md relative group"
+                        aria-label="Confirmar Pago"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        Confirmar Pago
+                        <span className="tooltip">Confirmar Pago</span>
                       </button>
                     )}
                     {installment.payments?.some(p => p.comprobante_url) && (
                       <button
                         onClick={() => onOpenReceiptsModal(installment)}
-                        className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-2 px-4 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                        className="p-2 rounded-full bg-gray-500 text-white hover:bg-gray-600 transition-colors shadow-md relative group"
+                        aria-label="Ver Comprobantes"
                       >
-                        Ver Comprobantes
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        <span className="tooltip">Ver Comprobantes</span>
                       </button>
                     )}
                   </div>
@@ -392,12 +412,12 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        modalRoot
       )}
     </div>
   );
 };
-
 // Resto de las interfaces y código existente...
 interface PaymentToConfirm {
   paymentId: number;
@@ -421,6 +441,7 @@ interface InstallmentForCollector extends Installment {
   hasUnconfirmedPayment: boolean;
   debtorId: number;
   debtorName: string;
+  installmentNumber: number; // Nuevo campo para el número de cuota
   payments?: any[]; // Añadido para acceder a los pagos
 }
 
@@ -437,6 +458,7 @@ const CollectorDashboard: React.FC = () => {
   const [paymentToConfirm, setPaymentToConfirm] = useState<PaymentToConfirm | null>(null);
   const [showReceiptsModal, setShowReceiptsModal] = useState(false);
   const [selectedInstallmentForReceipts, setSelectedInstallmentForReceipts] = useState<InstallmentForCollector | null>(null);
+  const [showAllInstallments, setShowAllInstallments] = useState(false); // State for "Todas las Cuotas" modal
   const [accumulatedEarnings, setAccumulatedEarnings] = useState<number>(() => {
     const savedEarnings = localStorage.getItem('accumulatedCollectorEarnings');
     return savedEarnings ? parseFloat(savedEarnings) : 0;
@@ -506,6 +528,14 @@ const CollectorDashboard: React.FC = () => {
     refetch();
   };
 
+  const handleShowAllInstallments = () => {
+    setShowAllInstallments(true);
+  };
+
+  const handleCloseAllInstallments = () => {
+    setShowAllInstallments(false);
+  };
+
   const handleSuccessfulUploadAndConfirm = async (paymentId: number, installmentId: number, monto: number) => {
     try {
       setAccumulatedEarnings(prev => prev + (monto * COLLECTOR_PROFIT_PERCENTAGE));
@@ -537,7 +567,9 @@ const CollectorDashboard: React.FC = () => {
       debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario });
       debtor.amountDue += loan.total_a_devolver - loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
       
-      const processedInstallments: InstallmentForCollector[] = loan.installments.map((inst: any) => {
+      const processedInstallments: InstallmentForCollector[] = loan.installments
+        .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+        .map((inst: any, index: number) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const instDate = new Date(inst.fecha);
@@ -560,6 +592,7 @@ const CollectorDashboard: React.FC = () => {
           hasUnconfirmedPayment, 
           debtorId: loan.user.id, 
           debtorName: `${loan.user.nombre} ${loan.user.apellido}`,
+          installmentNumber: index + 1, // Asignar número de cuota basado en el índice
           payments: inst.payments // Añadido para acceder a los pagos
         };
       });
@@ -600,106 +633,189 @@ const CollectorDashboard: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full mb-4 shadow-lg">
+              <span className="text-3xl text-white">💼</span>
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-3">
               Panel del Cobrador
             </h1>
-            <p className="text-slate-600">Gestiona los pagos y comprobantes de tus clientes</p>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Gestiona los pagos y comprobantes de tus clientes de forma eficiente
+            </p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20 transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-4xl">💳</div>
-                <div className="text-2xl">📈</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="group bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-2xl">💳</span>
+                  </div>
+                  <div className="text-3xl opacity-60">📈</div>
+                </div>
+                <p className="text-blue-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                  Total a Cobrar
+                </p>
+                <p className="text-4xl font-bold mb-1">
+                  {totalAmount.toLocaleString('es-PY')}
+                </p>
+                <p className="text-blue-200 text-sm">Guaraníes</p>
               </div>
-              <p className="text-blue-100 text-sm font-medium mb-1">Total a Cobrar</p>
-              <p className="text-3xl font-bold">{totalAmount.toLocaleString('es-PY')} Gs</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl shadow-purple-500/20 transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-4xl">💸</div>
-                <div className="text-2xl">📊</div>
+            <div className="group bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl shadow-purple-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-2xl">💸</span>
+                  </div>
+                  <div className="text-3xl opacity-60">📊</div>
+                </div>
+                <p className="text-purple-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                  Monto Prestado Total
+                </p>
+                <p className="text-4xl font-bold mb-1">
+                  {totalLoanedAmount.toLocaleString('es-PY')}
+                </p>
+                <p className="text-purple-200 text-sm">Guaraníes</p>
               </div>
-              <p className="text-purple-100 text-sm font-medium mb-1">Monto Prestado Total</p>
-              <p className="text-3xl font-bold">{totalLoanedAmount.toLocaleString('es-PY')} Gs</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-4xl">👥</div>
+            <div className="group bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center">
+                    <span className="text-2xl text-white">👥</span>
+                  </div>
+                </div>
+                <p className="text-slate-600 text-sm font-medium mb-2 uppercase tracking-wide">
+                  Total Clientes
+                </p>
+                <p className="text-4xl font-bold text-slate-800 mb-1">
+                  {debtors.length}
+                </p>
+                <p className="text-slate-500 text-sm">Activos</p>
               </div>
-              <p className="text-slate-600 text-sm font-medium mb-1">Total Clientes</p>
-              <p className="text-3xl font-bold text-slate-800">{debtors.length}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-xl shadow-red-500/20 transform hover:scale-105 transition-all duration-300 animate-pulse">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-4xl">⚠️</div>
+            <div className="group bg-gradient-to-br from-red-500 via-pink-600 to-rose-600 rounded-3xl p-8 text-white shadow-2xl shadow-red-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden ${overdueCount > 0 ? 'animate-pulse' : ''}">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-2xl">⚠️</span>
+                  </div>
+                </div>
+                <p className="text-red-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                  Pagos Vencidos
+                </p>
+                <p className="text-4xl font-bold mb-1">{overdueCount}</p>
+                <p className="text-red-200 text-sm">Cuotas</p>
               </div>
-              <p className="text-red-100 text-sm font-medium mb-1">Pagos Vencidos</p>
-              <p className="text-3xl font-bold">{overdueCount}</p>
             </div>
           </div>
 
           {/* Earnings Card */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-xl shadow-green-500/20 transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-4xl">💰</div>
-                <div className="text-2xl">💸</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="group bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 rounded-3xl p-8 text-white shadow-2xl shadow-emerald-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-3xl">💰</span>
+                  </div>
+                  <div className="text-4xl opacity-60">💸</div>
+                </div>
+                <p className="text-emerald-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                  Ganancias Acumuladas
+                </p>
+                <p className="text-4xl font-bold mb-1">
+                  {accumulatedEarnings.toLocaleString('es-PY')}
+                </p>
+                <p className="text-emerald-200 text-sm">Guaraníes (5% comisión)</p>
               </div>
-              <p className="text-green-100 text-sm font-medium mb-1">Ganancias Acumuladas</p>
-              <p className="text-3xl font-bold">{accumulatedEarnings.toLocaleString('es-PY')} Gs</p>
             </div>
           </div>
 
           {/* Debtors Grid */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">Clientes</h2>
+          <div className="mb-10">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center">
+                <span className="text-xl text-white">👥</span>
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-800">Clientes</h2>
+                <p className="text-slate-600">Gestiona los pagos de cada cliente</p>
+              </div>
+            </div>
             {debtors.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-                <div className="text-6xl mb-4">💳</div>
-                <p className="text-slate-500 text-lg">No hay clientes registrados</p>
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-16 text-center shadow-2xl border border-slate-200">
+                <div className="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-4xl text-white">💳</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3">No hay Clientes</h3>
+                <p className="text-slate-600 text-lg max-w-md mx-auto">
+                  Aún no tienes clientes registrados. Los clientes aparecerán aquí cuando se les asignen préstamos.
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {debtors.map((debtor) => (
-                  <div key={debtor.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all transform hover:scale-[1.02]">
+                  <div key={debtor.id} className="bg-white rounded-3xl shadow-2xl border border-slate-100 hover:shadow-3xl transition-all transform hover:scale-[1.02] duration-500 overflow-hidden">
                     {/* Card Header */}
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6">
-                      <div className="flex items-start">
-                        {debtor.foto_url && (
-                          <img 
-                            src={`${import.meta.env.VITE_API_BASE_URL}${debtor.foto_url}`} 
-                            alt={debtor.name} 
-                            className="w-16 h-16 rounded-full mr-4 border-2 border-slate-500 object-cover"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h3 className="font-bold text-xl text-white mb-1">{debtor.name}</h3>
-                              <p className="text-slate-300 text-sm">ID: {debtor.id}</p>
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full -translate-y-20 translate-x-20"></div>
+                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full translate-y-16 -translate-x-16"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-start">
+                          {debtor.foto_url ? (
+                            <img 
+                              src={`${import.meta.env.VITE_API_BASE_URL}${debtor.foto_url}`} 
+                              alt={debtor.name} 
+                              className="w-20 h-20 rounded-2xl mr-6 border-3 border-white/20 object-cover shadow-lg"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mr-6 flex items-center justify-center shadow-lg">
+                              <span className="text-2xl text-white font-bold">{debtor.name.charAt(0)}</span>
                             </div>
-                            <div className="text-right">
-                              <p className="text-slate-300 text-xs mb-1">Monto Prestado</p>
-                              <p className="text-lg font-bold text-white">
-                                {debtor.loans.reduce((sum, l) => sum + l.monto_principal, 0).toLocaleString('es-PY')} <span className="text-sm">Gs</span>
-                              </p>
-                              <p className="text-slate-300 text-xs mb-1 mt-2">Monto Diario Total</p>
-                              <p className="text-lg font-bold text-white">
-                                {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} <span className="text-sm">Gs</span>
-                              </p>
-                              <p className="text-slate-300 text-xs mb-1 mt-2">Total Deuda</p>
-                              <p className="text-2xl font-bold text-white">
-                                {debtor.amountDue.toLocaleString('es-PY')} <span className="text-sm">Gs</span>
-                              </p>
+                          )}
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-bold text-2xl text-white mb-2">{debtor.name}</h3>
+                                <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+                                  <span className="text-slate-300 text-sm">ID: {debtor.id}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-6">
+                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                                <p className="text-slate-300 text-xs font-medium mb-1">💰 Prestado</p>
+                                <p className="text-xl font-bold text-white">
+                                  {debtor.loans.reduce((sum, l) => sum + l.monto_principal, 0).toLocaleString('es-PY')} Gs
+                                </p>
+                              </div>
+                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                                <p className="text-slate-300 text-xs font-medium mb-1">📅 Diario</p>
+                                <p className="text-xl font-bold text-white">
+                                  {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} Gs
+                                </p>
+                              </div>
+                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 col-span-2">
+                                <p className="text-slate-300 text-xs font-medium mb-1">💳 Total Deuda</p>
+                                <p className="text-3xl font-bold text-emerald-400">
+                                  {debtor.amountDue.toLocaleString('es-PY')} Gs
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -707,20 +823,23 @@ const CollectorDashboard: React.FC = () => {
                     </div>
 
                     {/* Card Body */}
-                    <div className="p-6 space-y-6">
-                      <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl">📅</span>
-                          <h4 className="text-lg font-semibold text-slate-800">Calendario de Pagos</h4>
+                    <div className="p-8">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center">
+                          <span className="text-xl text-white">📅</span>
                         </div>
-                        <ElegantPaymentCalendar 
-                          installments={debtor.installments} 
-                          onOpenConfirmPaymentModal={handleOpenConfirmPaymentModal} 
-                          onUploadReceipt={handleUploadReceipt}
-                          showUploadButton={true}
-                          onOpenReceiptsModal={handleOpenReceiptsModal}
-                        />
+                        <div>
+                          <h4 className="text-xl font-bold text-slate-800">Calendario de Pagos</h4>
+                          <p className="text-slate-600">Gestiona las cuotas del cliente</p>
+                        </div>
                       </div>
+                      <ElegantPaymentCalendar 
+                        installments={debtor.installments} 
+                        onOpenConfirmPaymentModal={handleOpenConfirmPaymentModal} 
+                        onUploadReceipt={handleUploadReceipt}
+                        showUploadButton={true}
+                        onOpenReceiptsModal={handleOpenReceiptsModal}
+                      />
                     </div>
                   </div>
                 ))}
@@ -731,9 +850,19 @@ const CollectorDashboard: React.FC = () => {
 
         {/* Modals */}
         {showUploadModal && selectedInstallmentId != null && selectedDebtorId != null && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[500]">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative z-[999] transform transition-all duration-300 scale-100 opacity-100">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Subir Comprobante para Cuota #{selectedInstallmentId} ({selectedDebtorName})</h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative z-[999] animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">📄</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Subir Comprobante
+                  </h3>
+                  <p className="text-slate-600">Cuota #{selectedInstallmentId} - {selectedDebtorName}</p>
+                </div>
+              </div>
               <UploadReceipt 
                 debtorId={selectedDebtorId} 
                 installmentId={selectedInstallmentId.toString()} 
@@ -744,43 +873,83 @@ const CollectorDashboard: React.FC = () => {
               />
               <button
                 onClick={handleCloseUploadModal}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl"
+                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
               >
-                &times;
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
         )}
 
         {showConfirmPaymentModal && paymentToConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[400] p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto relative transform transition-all duration-300 scale-100 opacity-100">
-              <h3 className="text-2xl font-bold text-slate-800 mb-4 text-center">Confirmar Pago para {paymentToConfirm.debtorName}</h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[400] p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg mx-auto relative animate-slideUp max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">✅</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    Confirmar Pago
+                  </h3>
+                  <p className="text-slate-600">{paymentToConfirm.debtorName}</p>
+                </div>
+              </div>
               <button
                 onClick={handleCloseConfirmPaymentModal}
-                className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 transition-colors"
+                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="space-y-4">
-                <p className="text-slate-700"><strong className="font-semibold">Cuota ID:</strong> {paymentToConfirm.installmentId}</p>
-                <p className="text-slate-700"><strong className="font-semibold">Monto a Confirmar:</strong> {paymentToConfirm.monto.toLocaleString('es-PY')} Gs</p>
+              <div className="space-y-6">
+                <div className="bg-slate-50 rounded-2xl p-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-slate-600 text-sm font-medium">Cuota ID</p>
+                      <p className="text-xl font-bold text-slate-800">#{paymentToConfirm.installmentId}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600 text-sm font-medium">Monto a Confirmar</p>
+                      <p className="text-xl font-bold text-emerald-600">{paymentToConfirm.monto.toLocaleString('es-PY')} Gs</p>
+                    </div>
+                  </div>
+                </div>
                 {paymentToConfirm.comprobante_url ? (
                   <div>
-                    <p className="text-slate-700 font-semibold mb-2">Comprobante:</p>
-                    <img src={`${import.meta.env.VITE_API_BASE_URL}${paymentToConfirm.comprobante_url}`} alt="Comprobante de Pago" className="max-w-full h-auto rounded-lg shadow-md" />
+                    <p className="text-slate-700 font-semibold mb-3">Comprobante de Pago:</p>
+                    <div className="bg-slate-50 rounded-2xl p-4">
+                      <img 
+                        src={`${import.meta.env.VITE_API_BASE_URL}${paymentToConfirm.comprobante_url}`} 
+                        alt="Comprobante de Pago" 
+                        className="max-w-full h-auto rounded-xl shadow-lg border border-slate-200" 
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-slate-700">No hay comprobante adjunto para este pago.</p>
+                  <div className="p-6 bg-amber-50 border-l-4 border-amber-400 rounded-2xl">
+                    <p className="text-amber-800">No hay comprobante adjunto para este pago.</p>
+                  </div>
                 )}
                 <button
                   onClick={handleConfirmPaymentAction}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 font-bold shadow-lg"
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 px-6 rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 font-bold shadow-lg text-lg"
                   disabled={confirmPaymentMutation.isLoading}
                 >
-                  {confirmPaymentMutation.isLoading ? 'Confirmando...' : 'Confirmar Pago'}
+                  {confirmPaymentMutation.isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Confirmando...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <span className="mr-2">✅</span>
+                      Confirmar Pago
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
@@ -788,43 +957,78 @@ const CollectorDashboard: React.FC = () => {
         )}
 
         {showReceiptsModal && selectedInstallmentForReceipts && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[600] p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-800">
-                  Comprobantes para Cuota #{selectedInstallmentForReceipts.id}
-                </h3>
-                <button onClick={handleCloseReceiptsModal} className="text-slate-500 hover:text-slate-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[600] p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
+              <div className="flex items-center mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">📋</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    Comprobantes de Pago
+                  </h3>
+                  <p className="text-slate-600">Cuota #{selectedInstallmentForReceipts.installmentNumber}</p>
+                </div>
+                <button 
+                  onClick={handleCloseReceiptsModal} 
+                  className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {selectedInstallmentForReceipts.payments && selectedInstallmentForReceipts.payments.length > 0 ? (
                   selectedInstallmentForReceipts.payments.map((payment: any) => (
-                    <div key={payment.id} className="border border-slate-200 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="font-semibold text-slate-800">Pago ID: {payment.id}</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${payment.confirmado ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}>
-                          {payment.confirmado ? 'Confirmado' : 'Pendiente'}
+                    <div key={payment.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 hover:shadow-md transition-all duration-300">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <p className="font-bold text-slate-800 text-lg">Pago #{payment.id}</p>
+                          <p className="text-slate-600">Fecha: {new Date(payment.createdAt).toLocaleDateString('es-PY')}</p>
+                        </div>
+                        <span className={`px-4 py-2 rounded-full text-sm font-bold ${
+                          payment.confirmado 
+                            ? 'bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300' 
+                            : 'bg-gradient-to-r from-amber-100 to-yellow-200 text-amber-800 border border-amber-300'
+                        }`}>
+                          {payment.confirmado ? '✅ Confirmado' : '⏳ Pendiente'}
                         </span>
                       </div>
-                      <p className="text-slate-600 mb-2">Monto: <span className="font-bold">{payment.monto.toLocaleString('es-PY')} Gs</span></p>
+                      <div className="bg-white rounded-xl p-4 mb-4">
+                        <p className="text-slate-600 text-sm">Monto del Pago</p>
+                        <p className="text-2xl font-bold text-slate-800">{payment.monto.toLocaleString('es-PY')} Gs</p>
+                      </div>
                       {payment.comprobante_url ? (
-                        <img src={`${import.meta.env.VITE_API_BASE_URL}${payment.comprobante_url}`} alt={`Comprobante para pago ${payment.id}`} className="max-w-full h-auto rounded-lg shadow-md mt-2" />
+                        <div className="bg-white rounded-xl p-4">
+                          <p className="text-slate-600 text-sm mb-3">Comprobante:</p>
+                          <img 
+                            src={`${import.meta.env.VITE_API_BASE_URL}${payment.comprobante_url}`} 
+                            alt={`Comprobante para pago ${payment.id}`} 
+                            className="max-w-full h-auto rounded-xl shadow-lg border border-slate-200" 
+                          />
+                        </div>
                       ) : (
-                        <p className="text-slate-500 mt-2">No hay comprobante para este pago.</p>
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                          <p className="text-amber-800">No hay comprobante para este pago.</p>
+                        </div>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 text-center">No hay pagos registrados para esta cuota.</p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl text-slate-500">📄</span>
+                    </div>
+                    <p className="text-slate-500 text-lg">No hay pagos registrados para esta cuota.</p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         )}
+
+
       </div>
     </>
   );

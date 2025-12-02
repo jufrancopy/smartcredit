@@ -24,7 +24,7 @@ export const useGetLoans = (userId?: number) => {
 };
 
 // Create a new user
-export const useCreateUser = () => {
+export const useCreateUser = (options?: UseMutationOptions<any, Error, FormData>) => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
       const res = await fetch(`${API_URL}/users`, {
@@ -33,15 +33,17 @@ export const useCreateUser = () => {
         body: formData,
       });
       if (!res.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al crear usuario');
       }
       return res.json();
     },
+    ...options,
   });
 };
 
 // Create a new loan
-export const useCreateLoan = () => {
+export const useCreateLoan = (options?: UseMutationOptions<any, Error, any>) => {
   return useMutation({
     mutationFn: async (newLoan: any) => {
       const res = await fetch(`${API_URL}/loans`, {
@@ -53,10 +55,12 @@ export const useCreateLoan = () => {
         body: JSON.stringify(newLoan),
       });
       if (!res.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al crear préstamo');
       }
       return res.json();
     },
+    ...options,
   });
 };
 
@@ -134,6 +138,20 @@ export const useGetUsers = () => {
   });
 };
 
+// Fetch all payments
+export const useGetPayments = () => {
+  return useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/payments`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 // Obtener un usuario por ID
 export const useGetUser = (userId: number) => {
   return useQuery({
@@ -149,7 +167,7 @@ export const useGetUser = (userId: number) => {
 };
 
 export const loginUser = async ({ email, password }: any) => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -159,6 +177,21 @@ export const loginUser = async ({ email, password }: any) => {
   if (!res.ok) {
     const errorBody = await res.json(); // Assuming error response is also JSON
     throw new Error(errorBody.message || 'Error en el login');
+  }
+  return res.json();
+};
+
+export const loginAdmin = async ({ email, password }: any) => {
+  const res = await fetch(`${API_URL}/admin-login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const errorBody = await res.json();
+    throw new Error(errorBody.message || 'Error en el login de administrador');
   }
   return res.json();
 };

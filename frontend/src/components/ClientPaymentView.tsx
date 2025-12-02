@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useGetUser } from "../queries";
 import { useGetLoans } from "../queries";
 import UploadReceipt from "./UploadReceipt";
+import "../styles/animations.css";
 
 const getReceiptImageUrl = (comprobante_url: string): string => {
   if (!comprobante_url) return "";
@@ -20,7 +21,7 @@ interface ClientPaymentViewProps {
 // Interfaz para el calendario de pagos elegante para clientes
 interface ElegantPaymentCalendarProps {
   installments: InstallmentForClient[];
-  onUploadReceipt: (installmentId: number, expectedMonto: number) => void;
+  onUploadReceipt: (installmentId: number, expectedMonto: number, installmentNumber: number) => void;
   showUploadButton: boolean;
   onOpenPendingModal: (payment: any) => void;
 }
@@ -134,7 +135,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-slate-200">
+    <div className="bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => changeMonth(-1)}
@@ -341,12 +342,41 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                     </div>
                   )}
 
+                  {installment.status === "pagado" && installment.payments.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm text-slate-600 mb-2">Comprobantes de pago:</p>
+                      <div className="space-y-2">
+                        {installment.payments.filter(p => p.confirmado).map((payment: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                            <div>
+                              <p className="text-sm font-medium text-green-800">
+                                {payment.monto.toLocaleString('es-PY')} Gs
+                              </p>
+                              <p className="text-xs text-green-600">
+                                {new Date(payment.createdAt).toLocaleDateString('es-PY')}
+                              </p>
+                            </div>
+                            {payment.comprobante_url && (
+                              <button
+                                onClick={() => onOpenPendingModal(payment)}
+                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              >
+                                Ver comprobante
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {installment.status !== "pagado" && showUploadButton && (
                     <button
                       onClick={() => {
                         onUploadReceipt(
                           installment.id,
-                          installment.monto_expected
+                          installment.monto_expected,
+                          installment.installmentNumber
                         );
                         handleCloseDayDetails();
                       }}
@@ -393,6 +423,9 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<
     number | null
   >(null);
+  const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<
+    number | null
+  >(null);
   const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
   const [
     selectedInstallmentExpectedMonto,
@@ -422,27 +455,34 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
 
   const handleUploadReceiptClick = (
     installmentId: number,
-    expectedMonto: number
+    expectedMonto: number,
+    installmentNumber: number
   ) => {
     setSelectedInstallmentId(installmentId);
+    setSelectedInstallmentNumber(installmentNumber);
     setSelectedInstallmentExpectedMonto(expectedMonto);
     setShowUploadModal(true);
+    setSelectedPayment(null); // Asegurar que el modal de pago pendiente esté cerrado
   };
 
   const handleOpenPendingModal = (payment: any) => {
     setSelectedPayment(payment);
     setShowPendingModal(true);
+    setShowUploadModal(false); // Asegurar que el modal de subida esté cerrado
   };
 
   const handleClosePendingModal = () => {
     setSelectedPayment(null);
     setShowPendingModal(false);
+    setShowUploadModal(false); // Asegurar que el modal de subida también esté cerrado
   };
 
   const handleCloseUploadModal = () => {
     setSelectedInstallmentId(null);
+    setSelectedInstallmentNumber(null);
     setSelectedInstallmentExpectedMonto(0);
     setShowUploadModal(false);
+    setSelectedPayment(null); // Asegurar que el modal de pago pendiente también esté cerrado
     refetch();
   };
 
@@ -567,144 +607,192 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
+        <div className="mb-10 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4 shadow-lg">
+            <span className="text-3xl text-white">💳</span>
+          </div>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
             Mi Portal de Pagos
           </h1>
-          <p className="text-slate-600">
-            Gestiona tus préstamos y pagos de forma sencilla
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            Gestiona tus préstamos y pagos de forma sencilla y segura
           </p>
+          {userData && (
+            <div className="mt-4 inline-flex items-center px-4 py-2 bg-white rounded-full shadow-md border border-slate-200">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white text-sm font-bold">{userData.nombre.charAt(0)}</span>
+              </div>
+              <span className="text-slate-700 font-medium">Bienvenido, {userData.nombre} {userData.apellido}</span>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20 transform hover:scale-105 transition-all duration-300">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-4xl">💳</div>
-              <div className="text-2xl">📈</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="group bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-2xl">💳</span>
+                </div>
+                <div className="text-3xl opacity-60">📈</div>
+              </div>
+              <p className="text-blue-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                Total a Pagar
+              </p>
+              <p className="text-4xl font-bold mb-1">
+                {totalAmount.toLocaleString("es-PY")}
+              </p>
+              <p className="text-blue-200 text-sm">Guaraníes</p>
             </div>
-            <p className="text-blue-100 text-sm font-medium mb-1">
-              Total a Pagar
-            </p>
-            <p className="text-3xl font-bold">
-              {totalAmount.toLocaleString("es-PY")} Gs
-            </p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl shadow-purple-500/20 transform hover:scale-105 transition-all duration-300">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-4xl">💸</div>
-              <div className="text-2xl">📊</div>
+          <div className="group bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 rounded-3xl p-8 text-white shadow-2xl shadow-emerald-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-2xl">💸</span>
+                </div>
+                <div className="text-3xl opacity-60">📊</div>
+              </div>
+              <p className="text-emerald-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                Total Pagado
+              </p>
+              <p className="text-4xl font-bold mb-1">
+                {totalPaid.toLocaleString("es-PY")}
+              </p>
+              <p className="text-emerald-200 text-sm">Guaraníes</p>
             </div>
-            <p className="text-purple-100 text-sm font-medium mb-1">
-              Total Pagado
-            </p>
-            <p className="text-3xl font-bold">
-              {totalPaid.toLocaleString("es-PY")} Gs
-            </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 transform hover:scale-105 transition-all duration-300">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-4xl">📋</div>
+          <div className="group bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
+                  <span className="text-2xl text-white">📋</span>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm font-medium mb-2 uppercase tracking-wide">
+                Préstamos Activos
+              </p>
+              <p className="text-4xl font-bold text-slate-800 mb-1">
+                {loansData?.length || 0}
+              </p>
+              <p className="text-slate-500 text-sm">Contratos</p>
             </div>
-            <p className="text-slate-600 text-sm font-medium mb-1">
-              Préstamos Activos
-            </p>
-            <p className="text-3xl font-bold text-slate-800">
-              {loansData?.length || 0}
-            </p>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-xl shadow-red-500/20 transform hover:scale-105 transition-all duration-300 animate-pulse">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-4xl">⚠️</div>
+          <div className="group bg-gradient-to-br from-red-500 via-pink-600 to-rose-600 rounded-3xl p-8 text-white shadow-2xl shadow-red-500/25 transform hover:scale-105 hover:-translate-y-2 transition-all duration-500 relative overflow-hidden ${overdueCount > 0 ? 'animate-pulse' : ''}">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+              <p className="text-red-100 text-sm font-medium mb-2 uppercase tracking-wide">
+                Pagos Vencidos
+              </p>
+              <p className="text-4xl font-bold mb-1">{overdueCount}</p>
+              <p className="text-red-200 text-sm">Cuotas</p>
             </div>
-            <p className="text-red-100 text-sm font-medium mb-1">
-              Pagos Vencidos
-            </p>
-            <p className="text-3xl font-bold">{overdueCount}</p>
           </div>
         </div>
 
         {/* Loan Selection */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
-          <div className="mb-4">
-            <label
-              htmlFor="loanSelect"
-              className="block text-sm font-medium text-slate-700 mb-2"
-            >
-              Seleccionar Préstamo
-            </label>
+        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-10 border border-slate-100 backdrop-blur-sm">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+              <span className="text-xl text-white">🏦</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">Seleccionar Préstamo</h2>
+              <p className="text-slate-600">Elige el préstamo que deseas gestionar</p>
+            </div>
+          </div>
+          <div className="mb-6">
             <select
               id="loanSelect"
               value={selectedLoanId}
               onChange={handleLoanSelect}
-              className="block w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-lg font-medium"
+              className="block w-full px-6 py-4 border-2 border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-lg font-medium bg-slate-50 hover:bg-white transition-all duration-300"
               required
             >
-              <option value="">Seleccione un préstamo</option>
+              <option value="">✨ Seleccione un préstamo</option>
               {loansData?.map((loan: any) => (
                 <option key={loan.id} value={loan.id}>
-                  Préstamo #{loan.id} - Monto:{" "}
-                  {loan.monto_principal.toLocaleString("es-PY")} Gs
+                  💰 Préstamo #{loan.id} - {loan.monto_principal.toLocaleString("es-PY")} Gs
                 </option>
               ))}
             </select>
           </div>
 
           {selectedLoan && (
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6 rounded-xl text-white">
-              <h3 className="text-xl font-bold mb-4">
-                Detalles del Préstamo Seleccionado
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-slate-300 text-sm">Monto Principal</p>
-                  <p className="text-lg font-bold">
-                    {selectedLoan.monto_principal.toLocaleString("es-PY")} Gs
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-300 text-sm">Plazo</p>
-                  <p className="text-lg font-bold">
-                    {selectedLoan.plazo_dias} días
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-300 text-sm">Fecha Otorgado</p>
-                  <p className="text-lg font-bold">
-                    {formatDate(selectedLoan.fecha_otorgado)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-300 text-sm">Fecha Inicio Cobro</p>
-                  <p className="text-lg font-bold">
-                    {formatDate(
-                      calculateCorrectStartDate(selectedLoan.fecha_otorgado)
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-300 text-sm">Monto ya Pagado</p>
-                  <p className="text-lg font-bold">
-                    {selectedLoan.installments
-                      .reduce((sum, inst) => sum + inst.monto_pagado, 0)
-                      .toLocaleString("es-PY")}{" "}
-                    Gs
-                  </p>
-                </div>
-                {userData?.fondo_acumulado !== undefined && (
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 rounded-3xl text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full -translate-y-20 translate-x-20"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full translate-y-16 -translate-x-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                    <span className="text-2xl text-white">📊</span>
+                  </div>
                   <div>
-                    <p className="text-slate-300 text-sm">Fondo Acumulado</p>
-                    <p className="text-lg font-bold">
-                      {userData.fondo_acumulado.toLocaleString("es-PY")} Gs
+                    <h3 className="text-2xl font-bold mb-1">
+                      Detalles del Préstamo #{selectedLoan.id}
+                    </h3>
+                    <p className="text-slate-300">Información completa de tu préstamo</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <p className="text-slate-300 text-sm font-medium mb-1">💰 Monto Principal</p>
+                    <p className="text-2xl font-bold">
+                      {selectedLoan.monto_principal.toLocaleString("es-PY")} Gs
                     </p>
                   </div>
-                )}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <p className="text-slate-300 text-sm font-medium mb-1">⏰ Plazo</p>
+                    <p className="text-2xl font-bold">
+                      {selectedLoan.plazo_dias} días
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <p className="text-slate-300 text-sm font-medium mb-1">📅 Fecha Otorgado</p>
+                    <p className="text-xl font-bold">
+                      {formatDate(selectedLoan.fecha_otorgado)}
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <p className="text-slate-300 text-sm font-medium mb-1">🚀 Inicio Cobro</p>
+                    <p className="text-xl font-bold">
+                      {formatDate(
+                        calculateCorrectStartDate(selectedLoan.fecha_otorgado)
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <p className="text-slate-300 text-sm font-medium mb-1">✅ Monto Pagado</p>
+                    <p className="text-2xl font-bold text-emerald-400">
+                      {selectedLoan.installments
+                        .reduce((sum, inst) => sum + inst.monto_pagado, 0)
+                        .toLocaleString("es-PY")} Gs
+                    </p>
+                  </div>
+                  {userData?.fondo_acumulado !== undefined && (
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                      <p className="text-slate-300 text-sm font-medium mb-1">🏦 Fondo Acumulado</p>
+                      <p className="text-2xl font-bold text-blue-400">
+                        {userData.fondo_acumulado.toLocaleString("es-PY")} Gs
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -712,12 +800,17 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
 
         {/* Payment Calendar */}
         {selectedLoan && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl">📅</span>
-              <h2 className="text-2xl font-bold text-slate-800">
-                Calendario de Pagos
-              </h2>
+          <div className="bg-white rounded-3xl shadow-2xl p-8 mb-10 border border-slate-100">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center">
+                <span className="text-2xl text-white">📅</span>
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-800">
+                  Calendario de Pagos
+                </h2>
+                <p className="text-slate-600">Gestiona tus cuotas de forma visual</p>
+              </div>
             </div>
             <ElegantPaymentCalendar
               installments={selectedLoan.installments}
@@ -729,41 +822,57 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
         )}
 
         {!selectedLoan && loansData && loansData.length > 0 && (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-            <div className="text-6xl mb-4">📋</div>
-            <p className="text-slate-500 text-lg">
-              Por favor, seleccione un préstamo para ver sus pagos.
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-16 text-center shadow-2xl border border-blue-100">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl text-white">📋</span>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 mb-3">Selecciona un Préstamo</h3>
+            <p className="text-slate-600 text-lg max-w-md mx-auto">
+              Elige un préstamo de la lista superior para ver tu calendario de pagos y gestionar tus cuotas.
             </p>
           </div>
         )}
         {!selectedLoan && loansData && loansData.length === 0 && (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-            <div className="text-6xl mb-4">💳</div>
-            <p className="text-slate-500 text-lg">
-              No hay préstamos disponibles para mostrar.
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-16 text-center shadow-2xl border border-slate-200">
+            <div className="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl text-white">💳</span>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 mb-3">No hay Préstamos</h3>
+            <p className="text-slate-600 text-lg max-w-md mx-auto">
+              Actualmente no tienes préstamos activos. Contacta con tu asesor para más información.
             </p>
           </div>
         )}
 
         {/* Upload Receipt Modal */}
         {showUploadModal && selectedInstallmentId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[500]">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative z-[999] transform transition-all duration-300 scale-100 opacity-100">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                Subir Comprobante para Cuota #{selectedInstallmentId}
-              </h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative z-[999] transform transition-all duration-500 scale-100 opacity-100 animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">📄</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Subir Comprobante
+                  </h3>
+                  <p className="text-slate-600">Cuota #{selectedInstallmentNumber}</p>
+                </div>
+              </div>
               <UploadReceipt
                 debtorId={userId}
                 installmentId={selectedInstallmentId.toString()}
                 expectedMonto={selectedInstallmentExpectedMonto}
                 onClose={handleCloseUploadModal}
-                isCollector={false} // Client is uploading, no auto-confirmation
+                isCollector={false}
               />
               <button
                 onClick={handleCloseUploadModal}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl"
+                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
               >
-                &times;
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
@@ -771,27 +880,72 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
 
         {/* Pending Payment Modal */}
         {showPendingModal && selectedPayment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[500]">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative z-[999]">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                Comprobante Enviado
-              </h3>
-              <div className="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 mb-4">
-                <p className="font-bold">Pendiente de Aprobación</p>
-                <p>Tu pago está siendo revisado por el cobrador.</p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative z-[999] animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">📋</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Comprobante de Pago
+                  </h3>
+                  <p className="text-slate-600">Detalles de tu transacción</p>
+                </div>
               </div>
-              {selectedPayment.comprobante_url && (
-                <img
-                  src={getReceiptImageUrl(selectedPayment.comprobante_url)}
-                  alt="Comprobante de pago"
-                  className="max-w-full h-auto rounded-lg shadow-md"
-                />
+              
+              {!selectedPayment.confirmado && (
+                <div className="p-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-2xl mb-6">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">⏳</span>
+                    <div>
+                      <p className="font-bold text-amber-800">Pendiente de Aprobación</p>
+                      <p className="text-amber-700">Tu pago está siendo revisado por el cobrador.</p>
+                    </div>
+                  </div>
+                </div>
               )}
+              
+              {selectedPayment.confirmado && (
+                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-2xl mb-6">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">✅</span>
+                    <div>
+                      <p className="font-bold text-green-800">Pago Confirmado</p>
+                      <p className="text-green-700">Tu pago ha sido aprobado exitosamente.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {selectedPayment.comprobante_url && (
+                <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+                  <img
+                    src={getReceiptImageUrl(selectedPayment.comprobante_url)}
+                    alt="Comprobante de pago"
+                    className="max-w-full h-auto rounded-xl shadow-lg border border-slate-200"
+                  />
+                </div>
+              )}
+              
+              <div className="bg-slate-50 rounded-2xl p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Monto:</span>
+                  <span className="font-bold text-lg">{selectedPayment.monto?.toLocaleString('es-PY')} Gs</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-slate-600">Fecha:</span>
+                  <span className="font-medium">{new Date(selectedPayment.createdAt).toLocaleDateString('es-PY')}</span>
+                </div>
+              </div>
+              
               <button
                 onClick={handleClosePendingModal}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl"
+                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
               >
-                &times;
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>

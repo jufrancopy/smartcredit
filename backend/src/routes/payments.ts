@@ -4,6 +4,12 @@ import { PrismaClient } from '@prisma/client';
 import { sendEmail } from '../utils/emailService';
 import multer from 'multer';
 import path from 'path';
+import { getAllPayments } from '../controllers/payments';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+router.get('/payments', authenticateToken, getAllPayments);
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -22,9 +28,6 @@ interface AuthRequest extends Request {
   userId?: number;
   userRole?: string;
 }
-
-const router = Router();
-const prisma = new PrismaClient();
 
 // Upload a payment receipt
 router.post('/payments/upload', authenticateToken, upload.single('comprobante'), async (req: AuthRequest, res) => {
