@@ -209,3 +209,21 @@ export const loginAdmin = async ({ email, password }: any) => {
   }
   return res.json();
 };
+
+// Delete a payment
+export const useDeletePayment = (options?: UseMutationOptions<any, Error, number>) => {
+  return useMutation({
+    mutationFn: async (paymentId: number) => {
+      const res = await fetch(`${API_URL}/payments/${paymentId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al borrar pago');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};

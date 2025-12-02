@@ -385,4 +385,70 @@ router.put('/payments/:id/update-receipt', authenticateToken, upload.single('com
   }
 });
 
+// Delete a payment
+router.delete('/payments/:id', authenticateToken, async (req: AuthRequest, res) => {
+  if (req.userRole !== 'cobrador' && req.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Only cobrador or admin can delete payments.' });
+  }
+
+  const paymentId = Number(req.params.id);
+
+  if (isNaN(paymentId)) {
+    return res.status(400).json({ error: 'Invalid payment ID.' });
+  }
+
+  try {
+    // Find the existing payment with related data
+    const existingPayment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { installment: { include: { loan: true } } }
+    });
+
+    if (!existingPayment) {
+      return res.status(404).json({ error: 'Payment not found.' });
+    }
+
+    const paymentMonto = existingPayment.monto;
+    const installment = existingPayment.installment;
+
+    // Delete the payment
+    await prisma.payment.delete({
+      where: { id: paymentId }
+    });
+
+    // If payment was confirmed, update installment and user's accumulated fund
+    if (existingPayment.confirmado) {
+      // Update installment monto_pagado
+      const newMontoPagado = Math.max(0, installment.monto_pagado - paymentMonto);
+      const newStatus = newMontoPagado >= installment.monto_expected ? 'pagado' : 
+                       newMontoPagado > 0 ? 'parcial' : 'pendiente';
+
+      await prisma.installment.update({
+        where: { id: installment.id },
+        data: {
+          monto_pagado: newMontoPagado,
+          status: newStatus,
+        },
+      });
+
+      // Update user's accumulated fund (subtract the interest portion)
+      const totalInteresLoan = installment.loan.total_a_devolver - installment.loan.monto_principal;
+      const proportionInteresInPayment = totalInteresLoan / installment.loan.total_a_devolver;
+      const interestToSubtract = paymentMonto * proportionInteresInPayment;
+
+      await prisma.user.update({
+        where: { id: installment.loan.userId },
+        data: {
+          fondo_acumulado: { decrement: interestToSubtract },
+        },
+      });
+    }
+
+    res.json({ message: 'Payment deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting payment:', error);
+    res.status(500).json({ error: 'Error deleting payment', details: error.message });
+  }
+});
+
 export default router;

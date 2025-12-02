@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import UploadReceipt from './UploadReceipt';
-import { useGetLoans, useConfirmPayment } from '../queries';
+import { useGetLoans, useConfirmPayment, useDeletePayment } from '../queries';
 import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
@@ -463,6 +463,7 @@ interface InstallmentForCollector extends Installment {
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
   const confirmPaymentMutation = useConfirmPayment();
+  const deletePaymentMutation = useDeletePayment();
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<number | null>(null);
@@ -517,6 +518,20 @@ const CollectorDashboard: React.FC = () => {
     setSelectedPaymentToEdit(null);
     setShowEditPaymentModal(false);
     refetch();
+  };
+
+  const handleDeletePayment = async (paymentId: number) => {
+    if (window.confirm('¿Estás seguro de que quieres borrar este pago? Esta acción no se puede deshacer.')) {
+      try {
+        await deletePaymentMutation.mutateAsync(paymentId);
+        toast.success('Pago borrado exitosamente');
+        setShowReceiptsModal(false);
+        refetch();
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        toast.error('Error al borrar el pago');
+      }
+    }
   };
 
   const handleCloseConfirmPaymentModal = () => {
@@ -1043,7 +1058,7 @@ const CollectorDashboard: React.FC = () => {
                           <p className="text-amber-800">No hay comprobante para este pago.</p>
                         </div>
                       )}
-                      <div className="flex justify-end mt-4">
+                      <div className="flex justify-end gap-2 mt-4">
                         <button
                           onClick={() => handleOpenEditPaymentModal(payment)}
                           className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 font-medium text-sm flex items-center shadow-md"
@@ -1051,7 +1066,21 @@ const CollectorDashboard: React.FC = () => {
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                          Editar Pago
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeletePayment(payment.id)}
+                          className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 font-medium text-sm flex items-center shadow-md"
+                          disabled={deletePaymentMutation.isLoading}
+                        >
+                          {deletePaymentMutation.isLoading ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          ) : (
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                          Borrar
                         </button>
                       </div>
                     </div>
