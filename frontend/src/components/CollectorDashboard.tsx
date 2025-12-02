@@ -66,13 +66,28 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
     return weeks;
   };
 
+  // Función para normalizar fechas (eliminar problema de zona horaria)
+  const normalizeDate = (dateInput: string | Date): Date => {
+    let d: Date;
+    if (typeof dateInput === 'string') {
+      // Si es string (YYYY-MM-DD), lo parseamos como fecha local
+      const [year, month, day] = dateInput.split('-').map(Number);
+      d = new Date(year, month - 1, day); // Se crea en la zona horaria local
+    } else {
+      // Si ya es un objeto Date, lo "normalizamos" a medianoche local
+      d = new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
+    }
+    d.setHours(0, 0, 0, 0); // Asegurar que está a medianoche
+    return d;
+  };
+
   // Obtener cuotas para una fecha específica
   const getInstallmentsForDate = (date: Date) => {
+    const normalizedDate = normalizeDate(date);
+    
     return installments.filter(installment => {
-      const installmentDate = new Date(installment.fecha);
-      return installmentDate.getDate() === date.getDate() &&
-             installmentDate.getMonth() === date.getMonth() &&
-             installmentDate.getFullYear() === date.getFullYear();
+      const installmentDate = normalizeDate(installment.fecha);
+      return installmentDate.getTime() === normalizedDate.getTime();
     });
   };
 
