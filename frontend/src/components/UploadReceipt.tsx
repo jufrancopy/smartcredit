@@ -10,9 +10,10 @@ interface UploadReceiptProps {
   onSuccessfulUploadAndConfirm?: (paymentId: number, installmentId: number, monto: number) => void; // Callback for collector's auto-confirmation
   paymentId?: number; // ID del pago a editar (opcional)
   isEditing?: boolean; // Indica si estamos editando un pago existente
+  onSuccess?: () => void; // Callback for success notification
 }
 
-const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMonto, onClose, debtorId, isCollector, onSuccessfulUploadAndConfirm, paymentId, isEditing }) => {
+const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMonto, onClose, debtorId, isCollector, onSuccessfulUploadAndConfirm, paymentId, isEditing, onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [monto, setMonto] = useState<string>(expectedMonto.toString());
   const [isDragging, setIsDragging] = useState(false);
@@ -21,6 +22,10 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
       // For collectors, trigger the confirmation callback directly
       if (isCollector && onSuccessfulUploadAndConfirm) {
         onSuccessfulUploadAndConfirm(data.paymentId, parseInt(installmentId), parseFloat(monto));
+      }
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
       }
       onClose(); // Close modal and trigger refetch in parent
     },

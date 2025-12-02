@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useGetUser } from "../queries";
 import { useGetLoans } from "../queries";
 import UploadReceipt from "./UploadReceipt";
+import toast from "react-hot-toast";
 import "../styles/animations.css";
 
 const getReceiptImageUrl = (comprobante_url: string): string => {
@@ -865,6 +866,7 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
                 expectedMonto={selectedInstallmentExpectedMonto}
                 onClose={handleCloseUploadModal}
                 isCollector={false}
+                onSuccess={() => toast.success('¡Comprobante subido exitosamente! Será revisado por el cobrador.')}
               />
               <button
                 onClick={handleCloseUploadModal}
