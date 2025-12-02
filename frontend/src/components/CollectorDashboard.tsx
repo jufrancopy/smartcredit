@@ -334,7 +334,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                       <h4 className="font-semibold text-slate-800">Cuota #{installment.installmentNumber}</h4>
                       <p className="text-sm text-slate-600">{installment.debtorName}</p>
                       <p className="text-xs text-slate-500">
-                        {new Date(installment.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {normalizeDate(installment.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     </div>
                     <div className={`px-2 py-1 rounded-full text-xs font-bold ${
