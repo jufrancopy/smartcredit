@@ -474,6 +474,8 @@ const CollectorDashboard: React.FC = () => {
   const [showReceiptsModal, setShowReceiptsModal] = useState(false);
   const [selectedInstallmentForReceipts, setSelectedInstallmentForReceipts] = useState<InstallmentForCollector | null>(null);
   const [showAllInstallments, setShowAllInstallments] = useState(false); // State for "Todas las Cuotas" modal
+  const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
+  const [selectedPaymentToEdit, setSelectedPaymentToEdit] = useState<any | null>(null);
   const [accumulatedEarnings, setAccumulatedEarnings] = useState<number>(() => {
     const savedEarnings = localStorage.getItem('accumulatedCollectorEarnings');
     return savedEarnings ? parseFloat(savedEarnings) : 0;
@@ -503,6 +505,18 @@ const CollectorDashboard: React.FC = () => {
   const handleCloseReceiptsModal = () => {
     setSelectedInstallmentForReceipts(null);
     setShowReceiptsModal(false);
+  };
+
+  const handleOpenEditPaymentModal = (payment: any) => {
+    setSelectedPaymentToEdit(payment);
+    setShowEditPaymentModal(true);
+    setShowReceiptsModal(false);
+  };
+
+  const handleCloseEditPaymentModal = () => {
+    setSelectedPaymentToEdit(null);
+    setShowEditPaymentModal(false);
+    refetch();
   };
 
   const handleCloseConfirmPaymentModal = () => {
@@ -1028,6 +1042,17 @@ const CollectorDashboard: React.FC = () => {
                           <p className="text-amber-800">No hay comprobante para este pago.</p>
                         </div>
                       )}
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={() => handleOpenEditPaymentModal(payment)}
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 font-medium text-sm flex items-center shadow-md"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Editar Pago
+                        </button>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -1043,6 +1068,79 @@ const CollectorDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* Modal para editar pago */}
+        {showEditPaymentModal && selectedPaymentToEdit && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[700] p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">✏️</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-slate-800">
+                    Editar Pago
+                  </h3>
+                  <p className="text-slate-600">Pago #{selectedPaymentToEdit.id}</p>
+                </div>
+                <button 
+                  onClick={handleCloseEditPaymentModal} 
+                  className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="bg-slate-50 rounded-2xl p-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-slate-600 text-sm font-medium">Monto Actual</p>
+                      <p className="text-xl font-bold text-slate-800">{selectedPaymentToEdit.monto?.toLocaleString('es-PY')} Gs</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600 text-sm font-medium">Estado</p>
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-bold ${
+                        selectedPaymentToEdit.confirmado 
+                          ? 'bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300' 
+                          : 'bg-gradient-to-r from-amber-100 to-yellow-200 text-amber-800 border border-amber-300'
+                      }`}>
+                        {selectedPaymentToEdit.confirmado ? '✅ Confirmado' : '⏳ Pendiente'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedPaymentToEdit.comprobante_url && (
+                  <div>
+                    <p className="text-slate-700 font-semibold mb-3">Comprobante Actual:</p>
+                    <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+                      <img 
+                        src={`${import.meta.env.VITE_API_BASE_URL}${selectedPaymentToEdit.comprobante_url}`} 
+                        alt="Comprobante actual" 
+                        className="max-w-full h-auto rounded-xl shadow-lg border border-slate-200" 
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <p className="text-slate-700 font-semibold mb-3">Subir Nuevo Comprobante:</p>
+                  <UploadReceipt 
+                    debtorId={selectedPaymentToEdit.installment?.loan?.user?.id || 0}
+                    installmentId={selectedPaymentToEdit.installment?.id?.toString() || '0'}
+                    expectedMonto={selectedPaymentToEdit.monto || 0}
+                    onClose={handleCloseEditPaymentModal}
+                    isCollector={true}
+                    paymentId={selectedPaymentToEdit.id}
+                    isEditing={true}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </>

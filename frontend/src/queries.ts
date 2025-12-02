@@ -71,9 +71,23 @@ export const useUploadReceipt = (
 ) => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      const endpoint = isCollector ? `${API_URL}/payments/upload-and-confirm` : `${API_URL}/payments/upload`;
+      const isEditing = formData.get('isEditing') === 'true';
+      
+      let endpoint;
+      let method = 'POST';
+      
+      if (isEditing) {
+        // Si estamos editando, usar endpoint de actualización
+        const paymentId = formData.get('paymentId');
+        endpoint = `${API_URL}/payments/${paymentId}/update-receipt`;
+        method = 'PUT';
+      } else {
+        // Si es nuevo pago, usar endpoints existentes
+        endpoint = isCollector ? `${API_URL}/payments/upload-and-confirm` : `${API_URL}/payments/upload`;
+      }
+      
       const res = await fetch(endpoint, {
-        method: 'POST',
+        method,
         headers: {
           ...getAuthHeaders(),
         },

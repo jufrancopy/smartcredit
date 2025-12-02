@@ -8,9 +8,11 @@ interface UploadReceiptProps {
   debtorId?: number; // Make debtorId optional as it might be passed from CollectorDashboard
   isCollector?: boolean; // New prop to indicate if the uploader is a collector
   onSuccessfulUploadAndConfirm?: (paymentId: number, installmentId: number, monto: number) => void; // Callback for collector's auto-confirmation
+  paymentId?: number; // ID del pago a editar (opcional)
+  isEditing?: boolean; // Indica si estamos editando un pago existente
 }
 
-const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMonto, onClose, debtorId, isCollector, onSuccessfulUploadAndConfirm }) => {
+const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMonto, onClose, debtorId, isCollector, onSuccessfulUploadAndConfirm, paymentId, isEditing }) => {
   const [file, setFile] = useState<File | null>(null);
   const [monto, setMonto] = useState<string>(expectedMonto.toString());
   const [isDragging, setIsDragging] = useState(false);
@@ -71,7 +73,13 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
       }
       formData.append('monto', montoNum.toString());
       formData.append('comprobante', file);
-      formData.append('comentario', 'Comprobante de pago');
+      formData.append('comentario', isEditing ? 'Comprobante actualizado' : 'Comprobante de pago');
+      
+      // Si estamos editando, agregar el ID del pago
+      if (isEditing && paymentId) {
+        formData.append('paymentId', paymentId.toString());
+        formData.append('isEditing', 'true');
+      }
 
       uploadReceipt(formData);
     }
@@ -113,7 +121,7 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
       {/* File Upload Area */}
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-2">
-          📎 Comprobante de Pago
+          📎 {isEditing ? 'Nuevo Comprobante de Pago' : 'Comprobante de Pago'}
         </label>
         
         {!file ? (
@@ -132,7 +140,7 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
                 📤
               </div>
               <p className="text-slate-700 font-semibold mb-1">
-                Haz clic para seleccionar
+                {isEditing ? 'Seleccionar nuevo comprobante' : 'Haz clic para seleccionar'}
               </p>
               <p className="text-slate-500 text-sm mb-3">
                 o arrastra y suelta aquí
@@ -205,7 +213,7 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
         ) : (
           <span className="flex items-center justify-center gap-2">
             <span>📤</span>
-            Subir Comprobante
+            {isEditing ? 'Actualizar Comprobante' : 'Subir Comprobante'}
           </span>
         )}
       </button>
@@ -215,7 +223,7 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
         <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-2 border-emerald-200 rounded-xl p-4 flex items-center gap-3">
           <div className="text-2xl">✓</div>
           <p className="text-emerald-700 font-semibold">
-            ¡Comprobante subido exitosamente!
+            {isEditing ? '¡Comprobante actualizado exitosamente!' : '¡Comprobante subido exitosamente!'}
           </p>
         </div>
       )}
@@ -225,7 +233,7 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
           <div className="text-2xl">⚠</div>
           <div className="flex-1">
             <p className="text-red-700 font-semibold">
-              Error al subir comprobante
+              {isEditing ? 'Error al actualizar comprobante' : 'Error al subir comprobante'}
             </p>
             {error?.message && (
               <p className="text-red-600 text-sm mt-1">

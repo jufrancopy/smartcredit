@@ -307,4 +307,82 @@ router.post('/payments/upload-and-confirm', authenticateToken, upload.single('co
   }
 });
 
+// Update a payment receipt
+router.put('/payments/:id/update-receipt', authenticateToken, upload.single('comprobante'), async (req: AuthRequest, res) => {
+  if (req.userRole !== 'cobrador' && req.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Only cobrador or admin can update payment receipts.' });
+  }
+
+  const paymentId = Number(req.params.id);
+  const { monto, comentario } = req.body;
+  const comprobante_url = req.file ? `/uploads/photos/${req.file.filename}` : undefined;
+
+  if (isNaN(paymentId)) {
+    return res.status(400).json({ error: 'Invalid payment ID.' });
+  }
+
+  try {
+    // Find the existing payment
+    const existingPayment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { installment: { include: { loan: true } } }
+    });
+
+    if (!existingPayment) {
+      return res.status(404).json({ error: 'Payment not found.' });
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (monto !== undefined) updateData.monto = parseFloat(monto);
+    if (comentario !== undefined) updateData.comentario = comentario;
+    if (comprobante_url) updateData.comprobante_url = comprobante_url;
+
+    // Update the payment
+    const updatedPayment = await prisma.payment.update({
+      where: { id: paymentId },
+      data: updateData,
+    });
+
+    // If monto changed and payment is confirmed, update installment
+    if (monto !== undefined && existingPayment.confirmado) {
+      const oldMonto = existingPayment.monto;
+      const newMonto = parseFloat(monto);
+      const montoDifference = newMonto - oldMonto;
+
+      // Update installment monto_pagado
+      const installment = existingPayment.installment;
+      const newMontoPagado = installment.monto_pagado + montoDifference;
+      const newStatus = newMontoPagado >= installment.monto_expected ? 'pagado' : 'parcial';
+
+      await prisma.installment.update({
+        where: { id: installment.id },
+        data: {
+          monto_pagado: newMontoPagado,
+          status: newStatus,
+        },
+      });
+
+      // Update user's accumulated fund if needed
+      if (montoDifference !== 0) {
+        const totalInteresLoan = installment.loan.total_a_devolver - installment.loan.monto_principal;
+        const proportionInteresInPayment = totalInteresLoan / installment.loan.total_a_devolver;
+        const interestDifference = montoDifference * proportionInteresInPayment;
+
+        await prisma.user.update({
+          where: { id: installment.loan.userId },
+          data: {
+            fondo_acumulado: { increment: interestDifference },
+          },
+        });
+      }
+    }
+
+    res.json(updatedPayment);
+  } catch (error: any) {
+    console.error('Error updating payment receipt:', error);
+    res.status(500).json({ error: 'Error updating payment receipt', details: error.message });
+  }
+});
+
 export default router;
