@@ -488,9 +488,7 @@ const CollectorDashboard: React.FC = () => {
 
   const COLLECTOR_PROFIT_PERCENTAGE = 0.05; // 5% profit for the collector
 
-  useEffect(() => {
-    console.log('CollectorDashboard - modal states:', { showUploadModal, showConfirmPaymentModal, selectedInstallmentId, selectedDebtorId });
-  }, [showUploadModal, showConfirmPaymentModal, selectedInstallmentId, selectedDebtorId]);
+
 
   const handleOpenConfirmPaymentModal = (paymentId: number, installmentId: number, monto: number, comprobante_url: string | undefined, debtorName: string) => {
     setShowUploadModal(false);
@@ -783,7 +781,7 @@ const CollectorDashboard: React.FC = () => {
                   Ganancias Acumuladas
                 </p>
                 <p className="text-4xl font-bold mb-1">
-                  {accumulatedEarnings.toLocaleString('es-PY')}
+                  {Math.round(accumulatedEarnings).toLocaleString('es-PY')}
                 </p>
                 <p className="text-emerald-200 text-sm">Guaraníes (5% comisión)</p>
               </div>

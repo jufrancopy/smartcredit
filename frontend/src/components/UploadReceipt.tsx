@@ -62,6 +62,8 @@ const UploadReceipt: React.FC<UploadReceiptProps> = ({ installmentId, expectedMo
     }
   };
 
+
+
   const formatMonto = (value: string) => {
     if (!value) return '';
     const num = parseFloat(value);

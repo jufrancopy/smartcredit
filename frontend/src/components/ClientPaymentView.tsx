@@ -57,6 +57,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayDetails, setShowDayDetails] = useState(false);
+  const [showAllInstallments, setShowAllInstallments] = useState(false);
 
   // Navegación entre meses
   const changeMonth = (direction: number) => {
@@ -133,6 +134,14 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
   const handleCloseDayDetails = () => {
     setShowDayDetails(false);
     setSelectedDate(null);
+  };
+
+  const handleShowAllInstallments = () => {
+    setShowAllInstallments(true);
+  };
+
+  const handleCloseAllInstallments = () => {
+    setShowAllInstallments(false);
   };
 
   return (
@@ -224,6 +233,19 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
             </div>
           ))
         )}
+      </div>
+
+      {/* Botón para ver todas las cuotas */}
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={handleShowAllInstallments}
+          className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+          </svg>
+          Ver Todas las Cuotas
+        </button>
       </div>
 
       {/* Modal para detalles del día */}
@@ -394,6 +416,110 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                           d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
                           clipRule="evenodd"
                         />
+                      </svg>
+                      Subir Comprobante
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver todas las cuotas */}
+      {showAllInstallments && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-slate-800">Todas las Cuotas</h3>
+              <button onClick={handleCloseAllInstallments} className="text-slate-500 hover:text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {installments.map(installment => (
+                <div key={installment.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-all transform hover:scale-[1.02]">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-semibold text-slate-800">Cuota #{installment.installmentNumber}</h4>
+                      <p className="text-xs text-slate-500">
+                        {formatDate(installment.fecha)}
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      installment.status === 'pagado' ? 'bg-green-500 text-white shadow-md' :
+                      installment.status === 'vencido' ? 'bg-red-500 text-white animate-pulse shadow-md' :
+                      installment.status === 'parcial' ? 'bg-blue-500 text-white shadow-md' :
+                      'bg-slate-200 text-slate-800'
+                    }`}>
+                      {installment.status === 'pagado' ? 'Pagado ✅' :
+                       installment.status === 'vencido' ? 'Vencido ⚠️' :
+                       installment.status === 'parcial' ? 'Parcial ⏳' : 'Futuro 📅'}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <p className="text-sm text-slate-600">Monto esperado</p>
+                      <p className="font-bold text-lg">{installment.monto_expected.toLocaleString('es-PY')} Gs</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-600">Pagado</p>
+                      <p className="font-bold text-lg">{installment.monto_pagado.toLocaleString('es-PY')} Gs</p>
+                    </div>
+                  </div>
+
+                  {installment.hasUnconfirmedPayment && (
+                    <div className="mb-3 p-3 bg-yellow-100 rounded-lg text-yellow-800 text-sm flex items-center animate-pulse">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      Pago pendiente de confirmación
+                    </div>
+                  )}
+
+                  {installment.status === 'pagado' && installment.payments.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm text-slate-600 mb-2">Comprobantes de pago:</p>
+                      <div className="space-y-2">
+                        {installment.payments.filter(p => p.confirmado).map((payment: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                            <div>
+                              <p className="text-sm font-medium text-green-800">
+                                {payment.monto.toLocaleString('es-PY')} Gs
+                              </p>
+                              <p className="text-xs text-green-600">
+                                {new Date(payment.createdAt).toLocaleDateString('es-PY')}
+                              </p>
+                            </div>
+                            {payment.comprobante_url && (
+                              <button
+                                onClick={() => onOpenPendingModal(payment)}
+                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              >
+                                Ver comprobante
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {installment.status !== 'pagado' && showUploadButton && (
+                    <button
+                      onClick={() => {
+                        onUploadReceipt(installment.id, installment.monto_expected, installment.installmentNumber);
+                        handleCloseAllInstallments();
+                      }}
+                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 text-sm font-bold flex items-center justify-center shadow-md"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                       Subir Comprobante
                     </button>
@@ -789,7 +915,7 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
                       <p className="text-slate-300 text-sm font-medium mb-1">🏦 Fondo Acumulado</p>
                       <p className="text-2xl font-bold text-blue-400">
-                        {userData.fondo_acumulado.toLocaleString("es-PY")} Gs
+                        {Math.round(userData.fondo_acumulado).toLocaleString("es-PY")} Gs
                       </p>
                     </div>
                   )}
