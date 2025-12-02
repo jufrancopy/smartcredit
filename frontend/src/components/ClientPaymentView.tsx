@@ -883,7 +883,7 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
         {/* Pending Payment Modal */}
         {showPendingModal && selectedPayment && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
-            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative z-[999] animate-slideUp">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto relative z-[999] animate-slideUp">
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4">
                   <span className="text-xl text-white">📋</span>
