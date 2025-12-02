@@ -9,7 +9,7 @@ import '../styles/animations.css';
 interface ElegantPaymentCalendarProps {
   installments: InstallmentForCollector[];
   onOpenConfirmPaymentModal: (paymentId: number, installmentId: number, monto: number, comprobante_url: string | undefined, debtorName: string) => void;
-  onUploadReceipt: (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string) => void;
+  onUploadReceipt: (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string, installmentNumber: number) => void;
   showUploadButton: boolean;
   onOpenReceiptsModal: (installment: InstallmentForCollector) => void;
 }
@@ -255,7 +255,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                     {installment.status !== 'pagado' && showUploadButton && (
                       <button
                         onClick={() => {
-                          onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName);
+                          onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName, installment.installmentNumber);
                           handleCloseDayDetails();
                         }}
                         className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md relative group"
@@ -373,7 +373,7 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
                     {installment.status !== 'pagado' && showUploadButton && (
                       <button
                         onClick={() => {
-                          onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName);
+                          onUploadReceipt(installment.id, installment.monto_expected, installment.debtorId, installment.debtorName, installment.installmentNumber);
                           handleCloseAllInstallments();
                         }}
                         className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md relative group"
@@ -467,6 +467,7 @@ const CollectorDashboard: React.FC = () => {
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<number | null>(null);
+  const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<number | null>(null);
   const [selectedInstallmentExpectedMonto, setSelectedInstallmentExpectedMonto] = useState<number>(0);
   const [selectedDebtorId, setSelectedDebtorId] = useState<number | null>(null);
   const [selectedDebtorName, setSelectedDebtorName] = useState<string>('');
@@ -552,9 +553,10 @@ const CollectorDashboard: React.FC = () => {
     }
   };
 
-  const handleUploadReceipt = (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string) => {
+  const handleUploadReceipt = (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string, installmentNumber: number) => {
     setShowConfirmPaymentModal(false);
     setSelectedInstallmentId(installmentId);
+    setSelectedInstallmentNumber(installmentNumber);
     setSelectedInstallmentExpectedMonto(expectedMonto);
     setSelectedDebtorId(debtorId);
     setSelectedDebtorName(debtorName);
@@ -564,6 +566,7 @@ const CollectorDashboard: React.FC = () => {
   const handleCloseUploadModal = () => {
     setShowUploadModal(false);
     setSelectedInstallmentId(null);
+    setSelectedInstallmentNumber(null);
     setSelectedInstallmentExpectedMonto(0);
     setSelectedDebtorId(null);
     setSelectedDebtorName('');
@@ -902,7 +905,7 @@ const CollectorDashboard: React.FC = () => {
                   <h3 className="text-2xl font-bold text-gray-800">
                     Subir Comprobante
                   </h3>
-                  <p className="text-slate-600">Cuota #{selectedInstallmentId} - {selectedDebtorName}</p>
+                  <p className="text-slate-600">Cuota #{selectedInstallmentNumber} - {selectedDebtorName}</p>
                 </div>
               </div>
               <UploadReceipt 
