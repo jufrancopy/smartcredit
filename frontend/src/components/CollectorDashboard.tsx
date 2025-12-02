@@ -899,6 +899,7 @@ const CollectorDashboard: React.FC = () => {
                 onClose={handleCloseUploadModal}
                 isCollector={true}
                 onSuccessfulUploadAndConfirm={handleSuccessfulUploadAndConfirm}
+                onSuccess={() => toast.success('¡Comprobante subido y confirmado exitosamente!')}
               />
               <button
                 onClick={handleCloseUploadModal}
@@ -1135,6 +1136,7 @@ const CollectorDashboard: React.FC = () => {
                     isCollector={true}
                     paymentId={selectedPaymentToEdit.id}
                     isEditing={true}
+                    onSuccess={() => toast.success('¡Comprobante actualizado exitosamente!')}
                   />
                 </div>
               </div>
