@@ -1,7 +1,7 @@
 import { Request, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
-import { sendPaymentReceivedEmail, sendPaymentConfirmedEmail } from '../utils/emailService';
+import { sendEmail, sendPaymentReceivedEmail, sendPaymentConfirmedEmail } from '../utils/emailService';
 import multer from 'multer';
 import path from 'path';
 import { getAllPayments } from '../controllers/payments';
