@@ -1,7 +1,7 @@
 import { Request, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
-import { sendEmail } from '../utils/emailService';
+import { sendLoanApprovalEmail } from '../utils/emailService';
 
 // Extend the Request interface to include user information, mirroring auth.ts
 interface AuthRequest extends Request {
@@ -63,21 +63,16 @@ router.post('/loans', authenticateToken, async (req: AuthRequest, res) => {
     // Send email notification to the client
     const client = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, nombre: true } });
     if (client && client.email) {
-      const emailSubject = '¡Tu Préstamo Ha Sido Aprobado!';
-      const emailHtml = `
-        <p>Hola ${client.nombre},</p>
-        <p>Nos complace informarte que tu préstamo ha sido aprobado.</p>
-        <p><b>Monto Principal:</b> $${monto_principal}</p>
-        <p><b>Total a Devolver:</b> $${final_total_a_devolver}</p>
-        <p><b>Plazo:</b> ${plazo_dias} días</p>
-        <p><b>Fecha de Inicio de Cobro:</b> ${new Date(fecha_inicio_cobro).toLocaleDateString('es-ES')}</p>
-        <p>Recibirás ${plazo_dias} cuotas diarias de $${monto_diario}.</p>
-        <p>¡Gracias por confiar en nosotros!</p>
-        <p>Atentamente,</p>
-        <p>El equipo de AhorraConmigo</p>
-      `;
       try {
-        await sendEmail({ to: client.email, subject: emailSubject, html: emailHtml });
+        await sendLoanApprovalEmail({
+          email: client.email,
+          nombre: client.nombre,
+          monto_principal,
+          total_a_devolver: final_total_a_devolver,
+          plazo_dias,
+          monto_diario,
+          fecha_inicio_cobro
+        });
       } catch (emailError) {
         console.error('Error sending loan approval email:', emailError);
       }

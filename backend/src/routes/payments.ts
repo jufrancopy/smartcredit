@@ -1,7 +1,7 @@
 import { Request, Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
-import { sendEmail } from '../utils/emailService';
+import { sendPaymentReceivedEmail, sendPaymentConfirmedEmail } from '../utils/emailService';
 import multer from 'multer';
 import path from 'path';
 import { getAllPayments } from '../controllers/payments';
@@ -63,16 +63,12 @@ router.post('/payments/upload', authenticateToken, upload.single('comprobante'),
       // Notify the client about payment reception
       const clientUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, nombre: true } });
       if (clientUser && clientUser.email) {
-        const clientSubject = 'Hemos Recibido Tu Pago';
-        const clientHtml = `
-          <p>Hola ${clientUser.nombre},</p>
-          <p>Hemos recibido tu pago de <b>$${monto}</b> para la cuota ID ${installmentId}.</p>
-          <p>Estamos procesando tu pago y será confirmado en breve.</p>
-          <p>¡Gracias por tu pago!</p>
-          <p>Atentamente,</p>
-          <p>El equipo de AhorraConmigo</p>
-        `;
-        await sendEmail({ to: clientUser.email, subject: clientSubject, html: clientHtml });
+        await sendPaymentReceivedEmail({
+          email: clientUser.email,
+          nombre: clientUser.nombre,
+          monto: parseFloat(monto),
+          installmentId
+        });
       }
 
       // Notify the cobrador about a new payment
@@ -194,15 +190,12 @@ router.post('/payments/confirm', authenticateToken, async (req: AuthRequest, res
       // Notify the client about payment confirmation
       const clientUser = await prisma.user.findUnique({ where: { id: installment.loan.userId }, select: { email: true, nombre: true } });
       if (clientUser && clientUser.email) {
-        const clientSubject = 'Tu Pago Ha Sido Confirmado';
-        const clientHtml = `
-          <p>Hola ${clientUser.nombre},</p>
-          <p>Tu pago de <b>$${monto}</b> para la cuota ID ${installmentId} ha sido confirmado exitosamente.</p>
-          <p>Gracias por tu responsabilidad.</p>
-          <p>Atentamente,</p>
-          <p>El equipo de AhorraConmigo</p>
-        `;
-        await sendEmail({ to: clientUser.email, subject: clientSubject, html: clientHtml });
+        await sendPaymentConfirmedEmail({
+          email: clientUser.email,
+          nombre: clientUser.nombre,
+          monto,
+          installmentId
+        });
       }
     } catch (emailError) {
       console.error('Error sending payment confirmation email:', emailError);
@@ -288,15 +281,12 @@ router.post('/payments/upload-and-confirm', authenticateToken, upload.single('co
       // Notify the client about payment confirmation
       const clientUser = await prisma.user.findUnique({ where: { id: installment.loan.userId }, select: { email: true, nombre: true } });
       if (clientUser && clientUser.email) {
-        const clientSubject = 'Tu Pago Ha Sido Confirmado';
-        const clientHtml = `
-          <p>Hola ${clientUser.nombre},</p>
-          <p>Tu pago de <b>$${montoNum}</b> para la cuota ID ${installmentId} ha sido confirmado exitosamente.</p>
-          <p>Gracias por tu responsabilidad.</p>
-          <p>Atentamente,</p>
-          <p>El equipo de AhorraConmigo</p>
-        `;
-        await sendEmail({ to: clientUser.email, subject: clientSubject, html: clientHtml });
+        await sendPaymentConfirmedEmail({
+          email: clientUser.email,
+          nombre: clientUser.nombre,
+          monto: montoNum,
+          installmentId
+        });
       }
     } catch (emailError) {
       console.error('Error sending payment confirmation email (upload-and-confirm):', emailError);

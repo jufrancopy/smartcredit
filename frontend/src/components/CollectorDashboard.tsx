@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import UploadReceipt from './UploadReceipt';
-import { useGetLoans, useConfirmPayment, useDeletePayment } from '../queries';
+import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF } from '../queries';
 import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
@@ -12,6 +12,7 @@ interface ElegantPaymentCalendarProps {
   onUploadReceipt: (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string, installmentNumber: number) => void;
   showUploadButton: boolean;
   onOpenReceiptsModal: (installment: InstallmentForCollector) => void;
+  onDownloadPDF: (installments: InstallmentForCollector[]) => void;
 }
 
 // Componente de calendario elegante con más energía
@@ -20,7 +21,8 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
   onOpenConfirmPaymentModal, 
   onUploadReceipt,
   showUploadButton,
-  onOpenReceiptsModal
+  onOpenReceiptsModal,
+  onDownloadPDF
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -124,6 +126,10 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
     setShowAllInstallments(false);
   };
 
+  const handleDownloadPDF = (installments: InstallmentForCollector[]) => {
+    onDownloadPDF(installments);
+  };
+
   if (!modalRoot) return null;
 
   return (
@@ -183,8 +189,8 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
         ))}
       </div>
 
-      {/* Botón para ver todas las cuotas */}
-      <div className="mt-6 flex justify-center">
+      {/* Botones para ver todas las cuotas y descargar PDF */}
+      <div className="mt-6 flex justify-center gap-3">
         <button
           onClick={handleShowAllInstallments}
           className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
@@ -193,6 +199,15 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
           </svg>
           Ver Todas las Cuotas
+        </button>
+        <button
+          onClick={() => handleDownloadPDF(installments)}
+          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2 px-4 rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all transform hover:scale-105 shadow-lg"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+          Descargar PDF
         </button>
       </div>
 
@@ -591,6 +606,37 @@ const CollectorDashboard: React.FC = () => {
     }
   };
 
+  const handleDownloadPDF = async (installments: InstallmentForCollector[]) => {
+    try {
+      // Obtener el loanId del primer installment
+      if (installments.length === 0) {
+        toast.error('No hay cuotas para generar el PDF');
+        return;
+      }
+      
+      // Buscar el loan que contiene estos installments
+      const loanWithInstallments = loans?.find((loan: any) => 
+        loan.installments.some((inst: any) => 
+          installments.some(targetInst => targetInst.id === inst.id)
+        )
+      );
+      
+      if (!loanWithInstallments) {
+        toast.error('No se pudo encontrar el préstamo');
+        return;
+      }
+      
+      toast.loading('Generando PDF...');
+      await downloadLoanPDF(loanWithInstallments.id);
+      toast.dismiss();
+      toast.success('PDF descargado exitosamente!');
+    } catch (error) {
+      toast.dismiss();
+      console.error('Error downloading PDF:', error);
+      toast.error('Error al descargar el PDF');
+    }
+  };
+
   const debtors: Debtor[] = useMemo(() => {
     if (!loans) return [];
     
@@ -884,6 +930,7 @@ const CollectorDashboard: React.FC = () => {
                         onUploadReceipt={handleUploadReceipt}
                         showUploadButton={true}
                         onOpenReceiptsModal={handleOpenReceiptsModal}
+                        onDownloadPDF={handleDownloadPDF}
                       />
                     </div>
                   </div>

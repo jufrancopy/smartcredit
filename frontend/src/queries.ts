@@ -1,4 +1,5 @@
 import { useQuery, useMutation, UseMutationOptions } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 // const API_URL = 'http://localhost:3000/api';
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`;
@@ -226,4 +227,44 @@ export const useDeletePayment = (options?: UseMutationOptions<any, Error, number
     },
     ...options,
   });
+};
+
+// Download loan PDF
+export const downloadLoanPDF = async (loanId: number) => {
+  try {
+    const res = await fetch(`${API_URL}/pdf/loan/${loanId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error al generar PDF');
+    }
+    
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    
+    // Obtener el nombre del archivo del header Content-Disposition
+    const contentDisposition = res.headers.get('Content-Disposition');
+    let filename = `prestamo_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/); 
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    throw error;
+  }
 };
