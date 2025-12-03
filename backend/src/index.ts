@@ -13,7 +13,9 @@ const app = express();
 dotenv.config(); // Load environment variables
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition']
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 

@@ -249,12 +249,20 @@ export const downloadLoanPDF = async (loanId: number) => {
     
     // Obtener nombre del archivo del header Content-Disposition
     const contentDisposition = res.headers.get('Content-Disposition');
-    let filename = `prestamo_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    console.log('Content-Disposition:', contentDisposition);
+    let filename = `Cliente_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
     
     if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="(.+)"/); 
-      if (filenameMatch) {
-        filename = filenameMatch[1];
+      // Buscar tanto filename= como filename*=
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/); 
+      console.log('Filename match:', filenameMatch);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/["']/g, '');
+        // Si está codificado, decodificar
+        if (filename.includes('UTF-8')) {
+          filename = decodeURIComponent(filename.split("''")[1] || filename);
+        }
+        console.log('Final filename:', filename);
       }
     }
     
