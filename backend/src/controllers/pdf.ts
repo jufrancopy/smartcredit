@@ -147,11 +147,11 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
       const esperado = installment.monto_expected.toLocaleString('es-PY');
       const pagado = installment.monto_pagado.toLocaleString('es-PY');
       
-      let status = 'Pendiente';
+      let status = 'PENDIENTE';
       if (installment.monto_pagado >= installment.monto_expected) {
-        status = 'OK';
+        status = 'PAGADO';
       } else if (new Date(installment.fecha) < new Date()) {
-        status = 'Vencido';
+        status = 'VENCIDO';
       }
       
       doc.setFontSize(7);
