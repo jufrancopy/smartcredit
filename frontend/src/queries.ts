@@ -247,7 +247,17 @@ export const downloadLoanPDF = async (loanId: number) => {
     a.style.display = 'none';
     a.href = url;
     
-    const filename = `prestamo_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    // Obtener nombre del archivo del header Content-Disposition
+    const contentDisposition = res.headers.get('Content-Disposition');
+    let filename = `prestamo_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/); 
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
     a.download = filename;
     document.body.appendChild(a);
     a.click();
