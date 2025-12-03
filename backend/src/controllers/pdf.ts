@@ -181,7 +181,8 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
     
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
-    const fileName = `prestamo_${loan.user.nombre}_${loan.user.apellido}_${new Date().toISOString().split('T')[0]}.pdf`;
+    const clienteName = `${loan.user.nombre}_${loan.user.apellido}`.replace(/\s+/g, '_');
+    const fileName = `SmartCredit_${clienteName}_${new Date().toISOString().split('T')[0]}.pdf`;
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
