@@ -17,27 +17,23 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
-    "@types/html-pdf": "^3.0.3",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/nodemailer": "^7.0.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "html-pdf": "^3.0.1",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.4",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
     "prisma": "^6.18.0",
-    "puppeteer": "^24.31.0",
     "react-query": "^3.39.3",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",
-    "@types/puppeteer": "^5.4.7",
     "ts-node-dev": "^2.0.0"
   }
 }

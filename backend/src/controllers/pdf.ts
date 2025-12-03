@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import * as pdf from 'html-pdf';
+import { jsPDF } from 'jspdf';
 
 const prisma = new PrismaClient();
 
@@ -35,206 +35,59 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
     const montoTotalPagado = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
     const montoPendiente = loan.total_a_devolver - montoTotalPagado;
 
-    // Generar HTML para el PDF
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-                font-family: Arial, sans-serif; 
-                line-height: 1.4; 
-                color: #333;
-                padding: 20px;
-                background: #fff;
-            }
-            .container { 
-                max-width: 800px; 
-                margin: 0 auto; 
-            }
-            .header { 
-                text-align: center;
-                margin-bottom: 15px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #333;
-            }
-            .header h1 { 
-                font-size: 18px; 
-                margin-bottom: 2px;
-            }
-            .header p { 
-                font-size: 12px; 
-                color: #666;
-            }
-            .info-line {
-                display: flex;
-                justify-content: space-between;
-                padding: 3px 0;
-                font-size: 11px;
-                border-bottom: 1px solid #eee;
-            }
-            .info-line:last-child {
-                border-bottom: none;
-            }
-            .info-container {
-                margin-bottom: 10px;
-                padding: 8px;
-                background: #f9f9f9;
-            }
-            .table-container {
-                margin-top: 10px;
-            }
-            .installments-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 12px;
-            }
-            .installments-table th {
-                background: #f1f3f4;
-                padding: 10px 8px;
-                text-align: left;
-                font-weight: bold;
-                border: 1px solid #ddd;
-            }
-            .installments-table td {
-                padding: 8px;
-                border: 1px solid #ddd;
-            }
-            .installments-table tr:nth-child(even) {
-                background: #f9f9f9;
-            }
-            .status-paid {
-                color: #28a745;
-                font-weight: bold;
-            }
-            .status-pending {
-                color: #6c757d;
-            }
-            .status-overdue {
-                color: #dc3545;
-                font-weight: bold;
-            }
-            .footer {
-                margin-top: 30px;
-                text-align: center;
-                font-size: 11px;
-                color: #666;
-                border-top: 1px solid #ddd;
-                padding-top: 15px;
-            }
-            .amount {
-                text-align: right;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Detalle de Préstamo</h1>
-                <p>SmartCredit</p>
-            </div>
-            
-            <div class="info-container">
-                <div class="info-line">
-                    <span><strong>Cliente:</strong> ${loan.user.nombre} ${loan.user.apellido}</span>
-                    <span><strong>Fecha:</strong> ${loan.fecha_otorgado ? new Date(loan.fecha_otorgado).toLocaleDateString('es-PY') : 'N/A'}</span>
-                </div>
-                <div class="info-line">
-                    <span><strong>Principal:</strong> ${loan.monto_principal.toLocaleString('es-PY')} Gs</span>
-                    <span><strong>Diario:</strong> ${loan.monto_diario.toLocaleString('es-PY')} Gs</span>
-                </div>
-                <div class="info-line">
-                    <span><strong>Pagadas:</strong> ${cuotasPagadas} | <strong>Pendientes:</strong> ${cuotasPendientes}</span>
-                    <span><strong>Saldo:</strong> ${montoPendiente.toLocaleString('es-PY')} Gs</span>
-                </div>
-            </div>
-
-            <div class="table-container">
-                <div class="info-title">Cronograma de Pagos</div>
-                <table class="installments-table">
-                    <thead>
-                        <tr>
-                            <th>Cuota</th>
-                            <th>Fecha</th>
-                            <th>Monto Esperado</th>
-                            <th>Monto Pagado</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${loan.installments.map((installment, index) => {
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            const instDate = new Date(installment.fecha);
-                            instDate.setHours(0, 0, 0, 0);
-                            
-                            let statusClass = 'status-pending';
-                            let statusText = 'Pendiente';
-                            
-                            if (installment.monto_pagado >= installment.monto_expected) {
-                                statusClass = 'status-paid';
-                                statusText = 'Pagado';
-                            } else if (instDate < today) {
-                                statusClass = 'status-overdue';
-                                statusText = 'Vencido';
-                            }
-                            
-                            return `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${instDate.toLocaleDateString('es-PY')}</td>
-                                    <td class="amount">${installment.monto_expected.toLocaleString('es-PY')} Gs</td>
-                                    <td class="amount">${installment.monto_pagado.toLocaleString('es-PY')} Gs</td>
-                                    <td class="${statusClass}">${statusText}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="footer">
-                <p>SmartCredit - Sistema de Gestión de Préstamos</p>
-                <p>Generado el: ${new Date().toLocaleDateString('es-PY', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })}</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-
-    // Generar PDF con html-pdf
-    const options = {
-      format: 'A4',
-      border: {
-        top: '0.5in',
-        right: '0.5in',
-        bottom: '0.5in',
-        left: '0.5in'
-      }
-    };
-
-    pdf.create(htmlContent, options).toBuffer((err, buffer) => {
-      if (err) {
-        console.error('Error generating PDF with html-pdf:', err);
-        return res.status(500).json({ error: 'Error al generar PDF' });
-      }
-
-      const fileName = `prestamo_${loan.user.nombre}_${loan.user.apellido}_${new Date().toISOString().split('T')[0]}.pdf`;
+    // Generar PDF con jsPDF
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text('SmartCredit - Detalle de Préstamo', 20, 20);
+    
+    // Cliente
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${loan.user.nombre} ${loan.user.apellido}`, 20, 40);
+    doc.text(`Fecha: ${loan.fecha_otorgado ? new Date(loan.fecha_otorgado).toLocaleDateString('es-PY') : 'N/A'}`, 20, 50);
+    
+    // Detalles del préstamo
+    doc.text(`Monto Principal: ${loan.monto_principal.toLocaleString('es-PY')} Gs`, 20, 70);
+    doc.text(`Monto Diario: ${loan.monto_diario.toLocaleString('es-PY')} Gs`, 20, 80);
+    doc.text(`Cuotas Pagadas: ${cuotasPagadas} | Pendientes: ${cuotasPendientes}`, 20, 90);
+    doc.text(`Saldo Pendiente: ${montoPendiente.toLocaleString('es-PY')} Gs`, 20, 100);
+    
+    // Tabla de cuotas (simplificada)
+    let yPos = 120;
+    doc.text('Cuota | Fecha | Esperado | Pagado | Estado', 20, yPos);
+    
+    loan.installments.slice(0, 20).forEach((installment, index) => {
+      yPos += 10;
+      const fecha = new Date(installment.fecha).toLocaleDateString('es-PY');
+      const esperado = installment.monto_expected.toLocaleString('es-PY');
+      const pagado = installment.monto_pagado.toLocaleString('es-PY');
       
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      res.setHeader('Content-Length', buffer.length);
-
-      res.send(buffer);
+      let status = 'Pendiente';
+      if (installment.monto_pagado >= installment.monto_expected) {
+        status = 'Pagado';
+      } else if (new Date(installment.fecha) < new Date()) {
+        status = 'Vencido';
+      }
+      
+      const line = `${index + 1} | ${fecha} | ${esperado} | ${pagado} | ${status}`;
+      doc.text(line, 20, yPos);
+      
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
     });
+    
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+    const fileName = `prestamo_${loan.user.nombre}_${loan.user.apellido}_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    res.send(pdfBuffer);
 
   } catch (error) {
     console.error('Error generating PDF:', error);
