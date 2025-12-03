@@ -241,21 +241,18 @@ export const downloadLoanPDF = async (loanId: number) => {
       throw new Error('Error al generar PDF');
     }
     
-    const htmlContent = await res.text();
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
     
-    // Crear una nueva ventana para imprimir
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      
-      // Esperar a que cargue y luego abrir diálogo de impresión
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
-      };
-    }
+    const filename = `prestamo_${loanId}_${new Date().toISOString().split('T')[0]}.pdf`;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   } catch (error) {
     console.error('Error downloading PDF:', error);
     throw error;

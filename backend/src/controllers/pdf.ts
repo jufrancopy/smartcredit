@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import * as pdf from 'html-pdf';
 
 const prisma = new PrismaClient();
 
@@ -209,13 +210,31 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
     </html>
     `;
 
-    // Enviar HTML para que el navegador lo convierta a PDF
-    const fileName = `prestamo_${loan.user.nombre}_${loan.user.apellido}_${new Date().toISOString().split('T')[0]}.html`;
-    
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    
-    res.send(htmlContent);
+    // Generar PDF con html-pdf
+    const options = {
+      format: 'A4',
+      border: {
+        top: '0.5in',
+        right: '0.5in',
+        bottom: '0.5in',
+        left: '0.5in'
+      }
+    };
+
+    pdf.create(htmlContent, options).toBuffer((err, buffer) => {
+      if (err) {
+        console.error('Error generating PDF with html-pdf:', err);
+        return res.status(500).json({ error: 'Error al generar PDF' });
+      }
+
+      const fileName = `prestamo_${loan.user.nombre}_${loan.user.apellido}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', buffer.length);
+
+      res.send(buffer);
+    });
 
   } catch (error) {
     console.error('Error generating PDF:', error);
