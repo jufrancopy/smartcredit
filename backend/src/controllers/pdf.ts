@@ -38,76 +38,109 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
     // Generar PDF con jsPDF
     const doc = new jsPDF();
     
-    // Header con fondo azul
-    doc.setFillColor(102, 126, 234);
-    doc.rect(0, 0, 210, 35, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
+    // Header moderno con fondo gris
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, 0, 210, 25, 'F');
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('💳 SmartCredit', 20, 15);
-    doc.setFontSize(12);
+    doc.text('SmartCredit', 20, 12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Detalle de Préstamo', 20, 25);
-    
-    // Reset color
-    doc.setTextColor(0, 0, 0);
+    doc.text('Detalle de Prestamo', 20, 18);
     
     // Información del cliente en caja
-    doc.setFillColor(248, 249, 250);
-    doc.rect(15, 45, 180, 25, 'F');
+    doc.setFillColor(250, 250, 250);
+    doc.rect(15, 30, 180, 20, 'F');
     doc.setDrawColor(200, 200, 200);
-    doc.rect(15, 45, 180, 25, 'S');
+    doc.rect(15, 30, 180, 20, 'S');
     
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('👤 INFORMACIÓN DEL CLIENTE', 20, 55);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Nombre: ${loan.user.nombre} ${loan.user.apellido}`, 20, 62);
-    doc.text(`Fecha Otorgamiento: ${loan.fecha_otorgado ? new Date(loan.fecha_otorgado).toLocaleDateString('es-PY') : 'N/A'}`, 110, 62);
-    
-    // Detalles del préstamo en grid
-    const startY = 80;
-    doc.setFillColor(240, 248, 255);
-    doc.rect(15, startY, 180, 35, 'F');
-    doc.rect(15, startY, 180, 35, 'S');
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('💰 DETALLES DEL PRÉSTAMO', 20, startY + 10);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Principal: ${loan.monto_principal.toLocaleString('es-PY')} Gs`, 20, startY + 20);
-    doc.text(`Diario: ${loan.monto_diario.toLocaleString('es-PY')} Gs`, 110, startY + 20);
-    doc.text(`Pagadas: ${cuotasPagadas}`, 20, startY + 28);
-    doc.text(`Pendientes: ${cuotasPendientes}`, 70, startY + 28);
-    doc.text(`Saldo: ${montoPendiente.toLocaleString('es-PY')} Gs`, 120, startY + 28);
-    
-    // Tabla de cuotas con headers
-    let yPos = 130;
-    doc.setFont('helvetica', 'bold');
-    doc.text('📋 CRONOGRAMA DE PAGOS', 20, yPos);
-    
-    yPos += 10;
-    // Header de tabla
-    doc.setFillColor(102, 126, 234);
-    doc.rect(15, yPos - 5, 180, 8, 'F');
-    doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CLIENTE', 20, 37);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${loan.user.nombre} ${loan.user.apellido}`, 20, 43);
+    doc.text(`Fecha: ${loan.fecha_otorgado ? new Date(loan.fecha_otorgado).toLocaleDateString('es-PY') : 'N/A'}`, 120, 43);
+    
+    // Resumen en tarjetas
+    const cardY = 55;
+    const cardWidth = 42;
+    const cardHeight = 18;
+    
+    // Tarjeta 1: Principal
+    doc.setFillColor(230, 245, 255);
+    doc.rect(15, cardY, cardWidth, cardHeight, 'F');
+    doc.rect(15, cardY, cardWidth, cardHeight, 'S');
+    doc.setFontSize(7);
+    doc.text('PRINCIPAL', 17, cardY + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(`${loan.monto_principal.toLocaleString('es-PY')}`, 17, cardY + 12);
+    
+    // Tarjeta 2: Diario (calculado desde installments si monto_diario es 0)
+    const montoDiarioReal = loan.monto_diario || (loan.installments.length > 0 ? loan.installments[0].monto_expected : 0);
+    doc.setFillColor(255, 245, 230);
+    doc.rect(60, cardY, cardWidth, cardHeight, 'F');
+    doc.rect(60, cardY, cardWidth, cardHeight, 'S');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('DIARIO', 62, cardY + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(`${montoDiarioReal.toLocaleString('es-PY')}`, 62, cardY + 12);
+    
+    // Tarjeta 3: Pagadas
+    doc.setFillColor(230, 255, 230);
+    doc.rect(105, cardY, cardWidth, cardHeight, 'F');
+    doc.rect(105, cardY, cardWidth, cardHeight, 'S');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('PAGADAS', 107, cardY + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(`${cuotasPagadas}`, 107, cardY + 12);
+    
+    // Tarjeta 4: Saldo
+    doc.setFillColor(255, 230, 230);
+    doc.rect(150, cardY, cardWidth, cardHeight, 'F');
+    doc.rect(150, cardY, cardWidth, cardHeight, 'S');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('SALDO', 152, cardY + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(`${montoPendiente.toLocaleString('es-PY')}`, 152, cardY + 12);
+    
+    // Tabla moderna
+    let yPos = 80;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Cronograma de Pagos', 20, yPos);
+
+    yPos += 8;
+    // Header de tabla con fondo
+    doc.setFillColor(240, 240, 240);
+    doc.rect(15, yPos - 3, 180, 8, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
     doc.text('#', 20, yPos);
     doc.text('Fecha', 35, yPos);
     doc.text('Esperado', 70, yPos);
     doc.text('Pagado', 110, yPos);
     doc.text('Estado', 150, yPos);
     
-    doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     
-    loan.installments.forEach((installment, index) => {
-      yPos += 8;
+    // Mostrar cuotas con colores alternados
+    const maxCuotas = Math.min(loan.installments.length, 28);
+    
+    for (let i = 0; i < maxCuotas; i++) {
+      const installment = loan.installments[i];
+      yPos += 6;
       
-      // Alternar colores de fila
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 250, 250);
-        doc.rect(15, yPos - 5, 180, 8, 'F');
+      // Fila alternada
+      if (i % 2 === 0) {
+        doc.setFillColor(252, 252, 252);
+        doc.rect(15, yPos - 3, 180, 6, 'F');
       }
       
       const fecha = new Date(installment.fecha).toLocaleDateString('es-PY');
@@ -115,39 +148,36 @@ export const generateLoanDetailPDF = async (req: Request, res: Response) => {
       const pagado = installment.monto_pagado.toLocaleString('es-PY');
       
       let status = 'Pendiente';
-      let statusColor = [108, 117, 125]; // Gris
       if (installment.monto_pagado >= installment.monto_expected) {
-        status = '✅ Pagado';
-        statusColor = [40, 167, 69]; // Verde
+        status = 'OK';
       } else if (new Date(installment.fecha) < new Date()) {
-        status = '⚠️ Vencido';
-        statusColor = [220, 53, 69]; // Rojo
+        status = 'Vencido';
       }
       
-      doc.text(`${index + 1}`, 20, yPos);
+      doc.setFontSize(7);
+      doc.text(`${i + 1}`, 20, yPos);
       doc.text(fecha, 35, yPos);
-      doc.text(`${esperado} Gs`, 70, yPos);
-      doc.text(`${pagado} Gs`, 110, yPos);
-      
-      // Estado con color
-      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.text(esperado, 70, yPos);
+      doc.text(pagado, 110, yPos);
       doc.text(status, 150, yPos);
-      doc.setTextColor(0, 0, 0);
-      
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20;
-      }
-    });
+    }
     
-    // Footer
+    // Nota si hay más cuotas
+    if (loan.installments.length > 28) {
+      yPos += 8;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'italic');
+      doc.text(`+ ${loan.installments.length - 28} cuotas adicionales`, 20, yPos);
+    }
+    
+    // Footer moderno
     const pageHeight = doc.internal.pageSize.height;
-    doc.setFillColor(248, 249, 250);
-    doc.rect(0, pageHeight - 20, 210, 20, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('SmartCredit - Sistema de Gestión de Préstamos', 20, pageHeight - 12);
-    doc.text(`Generado: ${new Date().toLocaleDateString('es-PY')} ${new Date().toLocaleTimeString('es-PY')}`, 20, pageHeight - 6);
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, pageHeight - 15, 210, 15, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('SmartCredit', 20, pageHeight - 8);
+    doc.text(`${new Date().toLocaleDateString('es-PY')}`, 170, pageHeight - 8);
     
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
