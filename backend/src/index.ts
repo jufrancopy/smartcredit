@@ -7,6 +7,7 @@ import loanRoutes from './routes/loans';
 import paymentRoutes from './routes/payments';
 import authRoutes from './routes/auth';
 import pdfRoutes from './routes/pdf';
+import investmentRoutes from './routes/investments';
 import path from 'path';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use('/api', loanRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', authRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/investments', investmentRoutes);
 
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000');

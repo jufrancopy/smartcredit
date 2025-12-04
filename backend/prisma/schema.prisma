@@ -22,6 +22,8 @@ model User {
   loans           Loan[]
   payments        Payment[]
   riskEvents      RiskEvent[]
+  investments     Investment[]
+  salesReports    SalesReport[]
   createdAt       DateTime @default(now())
   fondo_acumulado Float    @default(0)
   updatedAt       DateTime @updatedAt
@@ -102,4 +104,62 @@ enum InstallmentStatus {
   pagado
   parcial
   vencido
+}
+
+model Product {
+  id                Int          @id @default(autoincrement())
+  nombre            String
+  descripcion       String?
+  categoria         String
+  precio_compra     Float        // Lo que paga SmartCredit
+  precio_venta_sugerido Float    // Precio sugerido para el cliente
+  unidad            String       // "caja", "maple", "kg", etc.
+  cantidad_por_unidad Int        // Ej: 12 leches por caja
+  imagen_url        String?
+  stock_disponible  Int          @default(0)
+  activo            Boolean      @default(true)
+  investments       Investment[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Investment {
+  id                Int          @id @default(autoincrement())
+  user              User         @relation(fields: [userId], references: [id])
+  userId            Int
+  product           Product      @relation(fields: [productId], references: [id])
+  productId         Int
+  cantidad_comprada Int
+  precio_unitario   Float        // Precio al momento de la compra
+  monto_total       Float        // cantidad * precio_unitario
+  fecha_compra      DateTime     @default(now())
+  estado            InvestmentStatus @default(activo)
+  salesReports      SalesReport[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model SalesReport {
+  id                Int        @id @default(autoincrement())
+  user              User       @relation(fields: [userId], references: [id])
+  userId            Int
+  investment        Investment @relation(fields: [investmentId], references: [id])
+  investmentId      Int
+  cantidad_vendida  Int
+  precio_venta      Float      // Precio al que vendió el cliente
+  monto_total_venta Float      // cantidad * precio_venta
+  ganancia_generada Float      // monto_total_venta - (cantidad * precio_compra_original)
+  fecha_venta       DateTime
+  comprobante_url   String?    // Foto del comprobante de venta
+  verificado        Boolean    @default(false)
+  verificado_por    Int?       // ID del admin que verificó
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+enum InvestmentStatus {
+  activo
+  vendido_parcial
+  vendido_completo
+  cancelado
 }

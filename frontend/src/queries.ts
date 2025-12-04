@@ -229,6 +229,99 @@ export const useDeletePayment = (options?: UseMutationOptions<any, Error, number
   });
 };
 
+// Investment System Queries
+
+// Get products for MiniTienda
+export const useGetProducts = () => {
+  return useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/products`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
+// Buy product (create investment)
+export const useBuyProduct = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (purchaseData: { productId: number; cantidad: number }) => {
+      const res = await fetch(`${API_URL}/investments/buy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(purchaseData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al comprar producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get user investments
+export const useGetUserInvestments = () => {
+  return useQuery({
+    queryKey: ['user-investments'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/my-investments`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
+// Report sale
+export const useReportSale = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (saleData: {
+      investmentId: number;
+      cantidad_vendida: number;
+      precio_venta: number;
+      fecha_venta: string;
+    }) => {
+      const res = await fetch(`${API_URL}/investments/report-sale`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(saleData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al reportar venta');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get investment dashboard
+export const useGetInvestmentDashboard = () => {
+  return useQuery({
+    queryKey: ['investment-dashboard'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/dashboard`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 // Download loan PDF
 export const downloadLoanPDF = async (loanId: number) => {
   try {
