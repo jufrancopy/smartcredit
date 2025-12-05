@@ -9,6 +9,8 @@ import CollectorList from './CollectorList';
 import LoanList from './LoanList';
 import Modal from './Modal';
 import CreateUserForm from './CreateUserForm';
+import ProductManager from './ProductManager';
+import ConsignmentManager from './ConsignmentManager';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -147,6 +149,26 @@ const AdminDashboard: React.FC = () => {
               >
                 💰 Préstamos
               </button>
+              <button
+                onClick={() => setActiveTab('minitienda')}
+                className={`${
+                  activeTab === 'minitienda'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+              >
+                📦 Productos
+              </button>
+              <button
+                onClick={() => setActiveTab('consignments')}
+                className={`${
+                  activeTab === 'consignments'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+              >
+                📋 Consignaciones
+              </button>
             </nav>
           </div>
         </div>
@@ -281,6 +303,18 @@ const AdminDashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-800">Gestión de Préstamos</h2>
             </div>
             <LoanList loans={loansData} />
+          </div>
+        )}
+
+        {activeTab === 'minitienda' && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+            <ProductManager />
+          </div>
+        )}
+
+        {activeTab === 'consignments' && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+            <ConsignmentManager />
           </div>
         )}
 

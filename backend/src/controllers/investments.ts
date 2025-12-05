@@ -8,21 +8,51 @@ interface AuthRequest extends Request {
   userRole?: string;
 }
 
-// Obtener todos los productos disponibles (MiniTienda)
+// Obtener productos con detalle de inventario
 export const getProducts = async (req: AuthRequest, res: Response) => {
   try {
     const products = await prisma.product.findMany({
       where: { activo: true },
-      orderBy: { categoria: 'asc' },
+      include: {
+        investments: {
+          include: {
+            user: { select: { id: true, nombre: true, apellido: true } },
+            salesReports: true
+          }
+        }
+      },
+      orderBy: { categoria: 'asc' }
     });
 
-    const productsWithProfitability = products.map(product => ({
-      ...product,
-      ganancia_potencial: product.precio_venta_sugerido - product.precio_compra,
-      margen_porcentaje: ((product.precio_venta_sugerido - product.precio_compra) / product.precio_compra * 100).toFixed(1)
-    }));
+    const productsWithDetails = products.map(product => {
+      const inventoryDetails = product.investments.map(inv => {
+        const vendido = inv.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
+        const disponible = inv.cantidad_comprada - vendido;
+        return {
+          cliente: `${inv.user.nombre} ${inv.user.apellido}`,
+          cantidad_total: inv.cantidad_comprada,
+          cantidad_vendida: vendido,
+          cantidad_disponible: disponible,
+          tipo_pago: inv.tipo_pago,
+          pagado: inv.pagado,
+          fecha_limite: inv.fecha_limite_pago,
+          vencido: inv.fecha_limite_pago && new Date() > inv.fecha_limite_pago && !inv.pagado
+        };
+      }).filter(detail => detail.cantidad_disponible > 0);
 
-    res.json(productsWithProfitability);
+      const totalEnClientes = inventoryDetails.reduce((sum, detail) => sum + detail.cantidad_disponible, 0);
+
+      return {
+        ...product,
+        ganancia_potencial: product.precio_venta_sugerido - product.precio_compra,
+        margen_porcentaje: ((product.precio_venta_sugerido - product.precio_compra) / product.precio_compra * 100).toFixed(1),
+        total_en_clientes: totalEnClientes,
+        detalle_inventario: inventoryDetails,
+        microcreditos_pendientes: inventoryDetails.filter(d => !d.pagado).length
+      };
+    });
+
+    res.json(productsWithDetails);
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Error al obtener productos' });
@@ -32,63 +62,47 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
 // Comprar producto (crear inversión)
 export const buyProduct = async (req: AuthRequest, res: Response) => {
   try {
-    const { productId, cantidad } = req.body;
+    const { productId, cantidad, tipo_pago } = req.body;
     const userId = req.userId!;
 
-    // Verificar que el producto existe y tiene stock
-    const product = await prisma.product.findUnique({
-      where: { id: productId }
-    });
-
-    if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
-
-    if (product.stock_disponible < cantidad) {
-      return res.status(400).json({ error: 'Stock insuficiente' });
-    }
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+    if (product.stock_disponible < cantidad) return res.status(400).json({ error: 'Stock insuficiente' });
 
     const montoTotal = product.precio_compra * cantidad;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    const esConsignacion = tipo_pago === 'microcredito';
+    const fechaLimite = esConsignacion ? new Date(Date.now() + 48 * 60 * 60 * 1000) : null;
 
-    // Verificar que el usuario tiene fondos suficientes
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user || user.fondo_acumulado < montoTotal) {
+    // Para pago directo, verificar fondos
+    if (!esConsignacion && (!user || user.fondo_acumulado < montoTotal)) {
       return res.status(400).json({ error: 'Fondos insuficientes' });
     }
 
-    // Crear la inversión y actualizar fondos
     const investment = await prisma.$transaction(async (tx) => {
-      // Crear inversión
       const newInvestment = await tx.investment.create({
         data: {
-          userId,
-          productId,
-          cantidad_comprada: cantidad,
-          precio_unitario: product.precio_compra,
-          monto_total: montoTotal,
+          userId, productId, cantidad_comprada: cantidad,
+          precio_unitario: product.precio_compra, monto_total: montoTotal,
+          tipo_pago: esConsignacion ? 'microcredito' : 'inmediato',
+          fecha_limite_pago: fechaLimite,
+          pagado: !esConsignacion // Pago directo = true, consignación = false
         },
-        include: {
-          product: true,
-        }
+        include: { product: true }
       });
 
-      // Descontar del fondo del usuario
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          fondo_acumulado: { decrement: montoTotal }
-        }
-      });
+      // Descontar fondos solo en pago directo
+      if (!esConsignacion) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { fondo_acumulado: { decrement: montoTotal } }
+        });
+      }
 
-      // Reducir stock del producto
       await tx.product.update({
         where: { id: productId },
-        data: {
-          stock_disponible: { decrement: cantidad }
-        }
+        data: { stock_disponible: { decrement: cantidad } }
       });
 
       return newInvestment;
@@ -256,5 +270,406 @@ export const getInvestmentDashboard = async (req: AuthRequest, res: Response) =>
   } catch (error) {
     console.error('Error fetching investment dashboard:', error);
     res.status(500).json({ error: 'Error al obtener dashboard de inversiones' });
+  }
+};
+
+// ADMIN: Crear producto
+export const createProduct = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { nombre, descripcion, categoria, precio_compra, precio_venta_sugerido, stock_disponible, unidad, cantidad_por_unidad, imagen_url } = req.body;
+
+    const product = await prisma.product.create({
+      data: {
+        nombre,
+        descripcion,
+        categoria,
+        precio_compra: parseInt(precio_compra),
+        precio_venta_sugerido: parseInt(precio_venta_sugerido),
+        stock_disponible: parseInt(stock_disponible),
+        unidad,
+        cantidad_por_unidad: parseInt(cantidad_por_unidad),
+        imagen_url
+      }
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ error: 'Error al crear producto' });
+  }
+};
+
+// ADMIN: Actualizar producto
+export const updateProduct = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { id } = req.params;
+    const { nombre, descripcion, categoria, precio_compra, precio_venta_sugerido, stock_disponible, unidad, cantidad_por_unidad, imagen_url } = req.body;
+
+    const product = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: {
+        nombre,
+        descripcion,
+        categoria,
+        precio_compra: parseInt(precio_compra),
+        precio_venta_sugerido: parseInt(precio_venta_sugerido),
+        stock_disponible: parseInt(stock_disponible),
+        unidad,
+        cantidad_por_unidad: parseInt(cantidad_por_unidad),
+        imagen_url
+      }
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ error: 'Error al actualizar producto' });
+  }
+};
+
+// ADMIN: Actualizar stock
+export const updateStock = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { id } = req.params;
+    const { stock_disponible } = req.body;
+
+    const product = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: { stock_disponible }
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error updating stock:', error);
+    res.status(500).json({ error: 'Error al actualizar stock' });
+  }
+};
+
+// PÚBLICO: Obtener productos de un cliente
+export const getClientProducts = async (req: Request, res: Response) => {
+  try {
+    const { clienteSlug } = req.params;
+
+    // Obtener cliente por slug
+    const client = await prisma.user.findUnique({
+      where: { tienda_slug: clienteSlug },
+      select: { id: true, nombre: true, apellido: true, whatsapp: true, tienda_nombre: true, tienda_activa: true }
+    });
+
+    if (!client || !client.tienda_activa) {
+      return res.status(404).json({ error: 'Tienda no encontrada o inactiva' });
+    }
+
+    if (!client) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    // Obtener inversiones activas del cliente con productos SmartCredit
+    const investments = await prisma.investment.findMany({
+      where: { 
+        userId: client.id,
+        estado: { in: ['activo', 'vendido_parcial'] }
+      },
+      include: {
+        product: true,
+        salesReports: true
+      }
+    });
+
+    // Productos de SmartCredit disponibles
+    const smartCreditProducts = investments.map(investment => {
+      const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
+      const cantidadDisponible = investment.cantidad_comprada - totalVendido;
+      
+      return {
+        ...investment.product,
+        cantidad_disponible: cantidadDisponible,
+        precio_cliente: investment.product.precio_venta_sugerido,
+        investment_id: investment.id,
+        tipo: 'smartcredit'
+      };
+    }).filter(product => product.cantidad_disponible > 0);
+
+    // Productos propios del cliente
+    const clientProducts = await prisma.clientProduct.findMany({
+      where: { userId: client.id, activo: true, stock: { gt: 0 } }
+    });
+
+    const clientOwnProducts = clientProducts.map(product => ({
+      ...product,
+      cantidad_disponible: product.stock,
+      precio_cliente: product.precio,
+      tipo: 'propio'
+    }));
+
+    // Combinar ambos tipos de productos
+    const allProducts = [...smartCreditProducts, ...clientOwnProducts];
+
+    res.json({ client, products: allProducts });
+  } catch (error) {
+    console.error('Error fetching client products:', error);
+    res.status(500).json({ error: 'Error al obtener productos del cliente' });
+  }
+};
+
+// COBRADOR: Monitorear tiendas de sus clientes
+export const getCollectorStores = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'cobrador' && req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    // Obtener clientes con tiendas activas
+    const clients = await prisma.user.findMany({
+      where: {
+        role: 'deudor',
+        tienda_activa: true
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        tienda_slug: true,
+        tienda_nombre: true,
+        investments: {
+          include: {
+            product: true,
+            salesReports: {
+              orderBy: { createdAt: 'desc' },
+              take: 5
+            }
+          }
+        }
+      }
+    });
+
+    // Calcular estadísticas por tienda
+    const storesData = clients.map(client => {
+      const totalInvestments = client.investments.length;
+      const totalSales = client.investments.reduce((sum, inv) => 
+        sum + inv.salesReports.reduce((salesSum, sale) => salesSum + sale.monto_total_venta, 0), 0
+      );
+      const recentSales = client.investments.flatMap(inv => inv.salesReports)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 3);
+
+      return {
+        cliente: {
+          id: client.id,
+          nombre: `${client.nombre} ${client.apellido}`,
+          tienda_slug: client.tienda_slug,
+          tienda_nombre: client.tienda_nombre
+        },
+        estadisticas: {
+          total_inversiones: totalInvestments,
+          total_ventas: totalSales,
+          ventas_recientes: recentSales.length
+        },
+        ventas_recientes: recentSales
+      };
+    });
+
+    res.json(storesData);
+  } catch (error) {
+    console.error('Error fetching collector stores:', error);
+    res.status(500).json({ error: 'Error al obtener tiendas' });
+  }
+};
+
+// CLIENTE: Configurar tienda
+export const configureStore = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const { tienda_nombre, tienda_slug } = req.body;
+
+    // Verificar que el slug no esté en uso
+    if (tienda_slug) {
+      const existingStore = await prisma.user.findFirst({
+        where: {
+          tienda_slug,
+          id: { not: userId }
+        }
+      });
+
+      if (existingStore) {
+        return res.status(400).json({ error: 'Este enlace ya está en uso' });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        tienda_nombre: tienda_nombre || null,
+        tienda_slug: tienda_slug || null,
+        tienda_activa: !!(tienda_nombre && tienda_slug)
+      }
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error configuring store:', error);
+    res.status(500).json({ error: 'Error al configurar tienda' });
+  }
+};
+
+// Pagar microcrédito
+export const payMicrocredit = async (req: AuthRequest, res: Response) => {
+  try {
+    const { investmentId } = req.body;
+    const userId = req.userId!;
+
+    const investment = await prisma.investment.findFirst({
+      where: { id: investmentId, userId, tipo_pago: 'microcredito', pagado: false }
+    });
+
+    if (!investment) return res.status(404).json({ error: 'Microcrédito no encontrado' });
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.fondo_acumulado < investment.monto_total) {
+      return res.status(400).json({ error: 'Fondos insuficientes' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.investment.update({
+        where: { id: investmentId },
+        data: { pagado: true }
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { fondo_acumulado: { decrement: investment.monto_total } }
+      });
+    });
+
+    res.json({ message: 'Microcrédito pagado exitosamente' });
+  } catch (error) {
+    console.error('Error paying microcredit:', error);
+    res.status(500).json({ error: 'Error al pagar microcrédito' });
+  }
+};
+
+// ADMIN/COBRADOR: Obtener consignaciones pendientes
+export const getPendingConsignments = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const pendingInvestments = await prisma.investment.findMany({
+      where: { pagado: false },
+      include: {
+        user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
+        product: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(pendingInvestments);
+  } catch (error) {
+    console.error('Error fetching pending consignments:', error);
+    res.status(500).json({ error: 'Error al obtener consignaciones pendientes' });
+  }
+};
+
+// ADMIN/COBRADOR: Aprobar consignación
+export const approveConsignment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { investmentId } = req.body;
+
+    const investment = await prisma.investment.update({
+      where: { id: investmentId },
+      data: { pagado: true }
+    });
+
+    res.json({ message: 'Consignación aprobada', investment });
+  } catch (error) {
+    console.error('Error approving consignment:', error);
+    res.status(500).json({ error: 'Error al aprobar consignación' });
+  }
+};
+
+// ADMIN/COBRADOR: Rechazar consignación
+export const rejectConsignment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { investmentId } = req.body;
+
+    await prisma.$transaction(async (tx) => {
+      const investment = await tx.investment.findUnique({
+        where: { id: investmentId },
+        include: { product: true }
+      });
+
+      if (!investment) {
+        throw new Error('Inversión no encontrada');
+      }
+
+      // Devolver stock al producto
+      await tx.product.update({
+        where: { id: investment.productId },
+        data: { stock_disponible: { increment: investment.cantidad_comprada } }
+      });
+
+      // Eliminar la inversión
+      await tx.investment.delete({
+        where: { id: investmentId }
+      });
+    });
+
+    res.json({ message: 'Consignación rechazada y stock restaurado' });
+  } catch (error) {
+    console.error('Error rejecting consignment:', error);
+    res.status(500).json({ error: 'Error al rechazar consignación' });
+  }
+};
+
+// ADMIN: Eliminar producto
+export const deleteProduct = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { id } = req.params;
+
+    // Obtener producto para eliminar imagen
+    const product = await prisma.product.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (product?.imagen_url) {
+      // Eliminar imagen del servidor
+      const { deleteProductImage } = require('../controllers/upload');
+      deleteProductImage(product.imagen_url);
+    }
+
+    await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: { activo: false }
+    });
+
+    res.json({ message: 'Producto eliminado' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };

@@ -248,7 +248,7 @@ export const useGetProducts = () => {
 // Buy product (create investment)
 export const useBuyProduct = (options?: UseMutationOptions<any, Error, any>) => {
   return useMutation({
-    mutationFn: async (purchaseData: { productId: number; cantidad: number }) => {
+    mutationFn: async (purchaseData: { productId: number; cantidad: number; tipo_pago?: string }) => {
       const res = await fetch(`${API_URL}/investments/buy`, {
         method: 'POST',
         headers: {
@@ -264,6 +264,173 @@ export const useBuyProduct = (options?: UseMutationOptions<any, Error, any>) => 
       return res.json();
     },
     ...options,
+  });
+};
+
+// Pay microcredit
+export const usePayMicrocredit = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (paymentData: { investmentId: number }) => {
+      const res = await fetch(`${API_URL}/investments/pay-microcredit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(paymentData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al pagar microcrédito');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get pending consignments
+export const useGetPendingConsignments = () => {
+  return useQuery({
+    queryKey: ['pending-consignments'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/pending-consignments`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
+// Approve consignment
+export const useApproveConsignment = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { investmentId: number }) => {
+      const res = await fetch(`${API_URL}/investments/approve-consignment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al aprobar consignación');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Reject consignment
+export const useRejectConsignment = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { investmentId: number }) => {
+      const res = await fetch(`${API_URL}/investments/reject-consignment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al rechazar consignación');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Client Products
+export const useGetClientProducts = () => {
+  return useQuery({
+    queryKey: ['client-products'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/client-products`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
+export const useCreateClientProduct = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (productData: any) => {
+      const res = await fetch(`${API_URL}/client-products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al crear producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useUpdateClientProduct = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async ({ id, ...productData }: any) => {
+      const res = await fetch(`${API_URL}/client-products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useDeleteClientProduct = (options?: UseMutationOptions<any, Error, number>) => {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${API_URL}/client-products/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al eliminar producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get categories
+export const useGetCategories = () => {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/client-products/categories`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
   });
 };
 
@@ -319,6 +486,178 @@ export const useGetInvestmentDashboard = () => {
       }
       return res.json();
     },
+  });
+};
+
+// Admin mutations
+export const useCreateProduct = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (productData: any) => {
+      const res = await fetch(`${API_URL}/investments/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al crear producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useUpdateProduct = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async ({ id, ...productData }: any) => {
+      const res = await fetch(`${API_URL}/investments/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(productData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useUpdateStock = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async ({ id, stock_disponible }: any) => {
+      const res = await fetch(`${API_URL}/investments/products/${id}/stock`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ stock_disponible }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar stock');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useDeleteProduct = (options?: UseMutationOptions<any, Error, number>) => {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${API_URL}/investments/products/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al eliminar producto');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useUploadProductImage = (options?: UseMutationOptions<any, Error, File>) => {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const res = await fetch(`${API_URL}/upload/product-image`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al subir imagen');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get collector stores
+export const useGetCollectorStores = () => {
+  return useQuery({
+    queryKey: ['collector-stores'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/collector-stores`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
+export const useConfigureStore = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (storeData: { tienda_nombre: string; tienda_slug: string }) => {
+      const res = await fetch(`${API_URL}/investments/configure-store`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(storeData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al configurar tienda');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useUpdateUser = (options?: UseMutationOptions<any, Error, { id: number; formData: FormData }>) => {
+  return useMutation({
+    mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
+      const res = await fetch(`${API_URL}/users/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar usuario');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+export const useDeleteUser = (options?: UseMutationOptions<any, Error, number>) => {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${API_URL}/users/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al eliminar usuario');
+      }
+      return res.json();
+    },
+    ...options,
   });
 };
 

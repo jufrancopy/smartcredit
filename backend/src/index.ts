@@ -8,6 +8,8 @@ import paymentRoutes from './routes/payments';
 import authRoutes from './routes/auth';
 import pdfRoutes from './routes/pdf';
 import investmentRoutes from './routes/investments';
+import uploadRoutes from './routes/upload';
+import clientProductRoutes from './routes/clientProducts';
 import path from 'path';
 
 const app = express();
@@ -15,9 +17,12 @@ dotenv.config(); // Load environment variables
 const prisma = new PrismaClient();
 
 app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
   exposedHeaders: ['Content-Disposition']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 
@@ -27,6 +32,8 @@ app.use('/api', paymentRoutes);
 app.use('/api', authRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/investments', investmentRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/client-products', clientProductRoutes);
 
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000');

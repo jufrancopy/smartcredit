@@ -70,7 +70,22 @@ router.get('/users', authenticateToken, async (req: AuthRequest, res) => {
     return res.status(403).json({ error: 'Forbidden: Deudor cannot view all users.' });
   }
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        cedula: true,
+        email: true,
+        whatsapp: true,
+        role: true,
+        tienda_slug: true,
+        tienda_nombre: true,
+        tienda_activa: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching users' });
@@ -106,7 +121,10 @@ router.get('/users/:id', authenticateToken, async (req: AuthRequest, res) => {
         whatsapp: true,
         role: true,
         email: true,
-        fondo_acumulado: true, // Include the new field
+        fondo_acumulado: true,
+        tienda_slug: true,
+        tienda_nombre: true,
+        tienda_activa: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -120,6 +138,79 @@ router.get('/users/:id', authenticateToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Error fetching user details' });
+  }
+});
+
+// Update user
+router.put('/users/:id', authenticateToken, upload.single('foto'), async (req: AuthRequest, res) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Only admin can update users.' });
+  }
+  
+  const { id } = req.params;
+  const { nombre, apellido, cedula, fecha_nacimiento, tipo_comercio, whatsapp, email } = req.body;
+  const foto_url = req.file ? `/uploads/photos/${req.file.filename}` : undefined;
+  
+  try {
+    const updateData: any = {
+      nombre,
+      apellido,
+      cedula,
+      fecha_nacimiento: fecha_nacimiento ? new Date(fecha_nacimiento) : undefined,
+      tipo_comercio,
+      whatsapp,
+      email
+    };
+    
+    if (foto_url) {
+      updateData.foto_url = foto_url;
+    }
+    
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+    
+    const user = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: updateData
+    });
+    
+    res.json(user);
+  } catch (error: any) {
+    console.error('Error updating user:', error);
+    if (error.code === 'P2002') {
+      const target = error.meta?.target || 'unknown';
+      res.status(409).json({ error: `Conflicto: Ya existe un usuario con este ${target}.` });
+    } else {
+      res.status(500).json({ error: 'Error actualizando usuario', details: error.message });
+    }
+  }
+});
+
+// Delete user
+router.delete('/users/:id', authenticateToken, async (req: AuthRequest, res) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Only admin can delete users.' });
+  }
+  
+  const { id } = req.params;
+  
+  try {
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ message: 'Usuario eliminado exitosamente' });
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
+    if (error.code === 'P2003') {
+      res.status(400).json({ error: 'No se puede eliminar: el usuario tiene registros relacionados' });
+    } else {
+      res.status(500).json({ error: 'Error eliminando usuario', details: error.message });
+    }
   }
 });
 

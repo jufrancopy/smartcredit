@@ -17,31 +17,37 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token == null) {
-    return res.sendStatus(401); // No token, unauthorized
+    return res.status(401).json({ error: 'Token requerido' });
   }
 
   jwt.verify(token, JWT_SECRET, async (err: any, user: any) => {
     if (err) {
-      return res.sendStatus(403); // Token is invalid or expired
+      return res.status(403).json({ error: 'Token inválido o expirado' });
     }
 
     try {
-      // Verify user exists in DB and roles match
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.userId },
-        select: { id: true, role: true }
-      });
+      // Special case for admin from env
+      if (user.userId === 1 && user.role === 'admin') {
+        req.userId = 1;
+        req.userRole = 'admin';
+      } else {
+        // Verify user exists in DB and roles match
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.userId },
+          select: { id: true, role: true }
+        });
 
-      if (!dbUser || dbUser.role !== user.role) {
-        return res.sendStatus(403); // User or role mismatch
+        if (!dbUser || dbUser.role !== user.role) {
+          return res.status(403).json({ error: 'Usuario o rol inválido' });
+        }
+
+        req.userId = dbUser.id;
+        req.userRole = dbUser.role;
       }
-
-      req.userId = dbUser.id;
-      req.userRole = dbUser.role;
       next();
     } catch (error) {
       console.error('Error fetching user for authentication:', error);
-      res.sendStatus(500); // Internal server error
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   });
 };

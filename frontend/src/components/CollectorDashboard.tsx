@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import UploadReceipt from './UploadReceipt';
+import StoreMonitor from './StoreMonitor';
+import ConsignmentManager from './ConsignmentManager';
 import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF } from '../queries';
 import '../styles/animations.css';
 
@@ -480,6 +482,7 @@ const CollectorDashboard: React.FC = () => {
   const confirmPaymentMutation = useConfirmPayment();
   const deletePaymentMutation = useDeletePayment();
 
+  const [activeTab, setActiveTab] = useState('payments');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<number | null>(null);
   const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<number | null>(null);
@@ -837,17 +840,56 @@ const CollectorDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Debtors Grid */}
+          {/* Navigation Tabs */}
           <div className="mb-10">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center">
-                <span className="text-xl text-white">👥</span>
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-slate-800">Clientes</h2>
-                <p className="text-slate-600">Gestiona los pagos de cada cliente</p>
-              </div>
+            <div className="bg-white rounded-2xl shadow-lg p-2">
+              <nav className="flex space-x-2" aria-label="Tabs">
+                <button
+                  onClick={() => setActiveTab('payments')}
+                  className={`${
+                    activeTab === 'payments'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                >
+                  💳 Pagos
+                </button>
+                <button
+                  onClick={() => setActiveTab('stores')}
+                  className={`${
+                    activeTab === 'stores'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                >
+                  🏪 Tiendas
+                </button>
+                <button
+                  onClick={() => setActiveTab('consignments')}
+                  className={`${
+                    activeTab === 'consignments'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                >
+                  📋 Consignaciones
+                </button>
+              </nav>
             </div>
+          </div>
+
+          {/* Content based on active tab */}
+          {activeTab === 'payments' && (
+            <div className="mb-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center">
+                  <span className="text-xl text-white">👥</span>
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-800">Clientes</h2>
+                  <p className="text-slate-600">Gestiona los pagos de cada cliente</p>
+                </div>
+              </div>
             {debtors.length === 0 ? (
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-16 text-center shadow-2xl border border-slate-200">
                 <div className="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -937,7 +979,20 @@ const CollectorDashboard: React.FC = () => {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
+
+          {activeTab === 'stores' && (
+            <div className="mb-10">
+              <StoreMonitor />
+            </div>
+          )}
+
+          {activeTab === 'consignments' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <ConsignmentManager />
+            </div>
+          )}
         </div>
 
         {/* Modals */}

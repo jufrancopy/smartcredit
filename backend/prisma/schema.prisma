@@ -24,8 +24,12 @@ model User {
   riskEvents      RiskEvent[]
   investments     Investment[]
   salesReports    SalesReport[]
+  clientProducts  ClientProduct[]
   createdAt       DateTime @default(now())
   fondo_acumulado Float    @default(0)
+  tienda_slug     String?  @unique
+  tienda_nombre   String?
+  tienda_activa   Boolean  @default(false)
   updatedAt       DateTime @updatedAt
 }
 
@@ -134,6 +138,9 @@ model Investment {
   monto_total       Float        // cantidad * precio_unitario
   fecha_compra      DateTime     @default(now())
   estado            InvestmentStatus @default(activo)
+  tipo_pago         PaymentType  @default(inmediato)
+  fecha_limite_pago DateTime?    // Para microcréditos
+  pagado            Boolean      @default(true)
   salesReports      SalesReport[]
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
@@ -162,4 +169,24 @@ enum InvestmentStatus {
   vendido_parcial
   vendido_completo
   cancelado
+}
+
+enum PaymentType {
+  inmediato
+  microcredito
+}
+
+model ClientProduct {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  nombre      String
+  descripcion String?
+  categoria   String
+  precio      Float
+  stock       Int      @default(0)
+  imagen_url  String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

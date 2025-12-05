@@ -32,7 +32,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id, role: user.role, nombre: user.nombre }, JWT_SECRET, {
       expiresIn: '8h',
     });
 
@@ -48,6 +48,17 @@ export const adminLogin = async (req: Request, res: Response) => {
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  // Check environment variables for admin credentials
+  const adminUser = process.env.ADMIN_USER;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (adminUser && adminPassword && email === adminUser && password === adminPassword) {
+    const token = jwt.sign({ userId: 1, role: 'admin', nombre: 'Admin' }, JWT_SECRET, {
+      expiresIn: '8h',
+    });
+    return res.json({ token, user: { id: 1, nombre: 'Admin', role: 'admin' } });
   }
 
   try {

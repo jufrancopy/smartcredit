@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate, Outlet } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { jwtDecode } from 'jwt-decode';
 
 import Layout from './components/Layout';
@@ -12,6 +12,7 @@ import CreateLoanForm from './components/CreateLoanForm';
 import CreateClientForm from './components/CreateClientForm';
 import CreateUserForm from './components/CreateUserForm';
 import AdminLoginForm from './components/AdminLoginForm';
+import TiendaPublica from './components/TiendaPublica';
 
 interface DecodedToken {
   userId: number;
@@ -93,6 +94,8 @@ const App: React.FC = () => {
     setUserRole(roleLowerCase);
     setUserName(decodedToken.nombre);
 
+    toast.success('Login exitoso!');
+
     switch (roleLowerCase) {
       case 'admin':
         navigate('/admin-dashboard', { replace: true });
@@ -141,6 +144,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/login" element={<LoginForm onLoginSuccess={handleLogin} />} />
         <Route path="/admin-login" element={<AdminLoginForm onLoginSuccess={handleLogin} />} />
+        <Route path="/tienda/:clienteSlug" element={<TiendaPublica />} />
         <Route path="/" element={<HomeRedirect />} />
           
         <Route 

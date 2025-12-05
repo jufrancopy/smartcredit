@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from "react";
-import { useGetUser } from "../queries";
+import { useGetUser, useConfigureStore } from "../queries";
 import { useGetLoans } from "../queries";
+import { useQueryClient } from '@tanstack/react-query';
 import UploadReceipt from "./UploadReceipt";
+import ProductCatalog from "./ProductCatalog";
+import ClientProductManager from "./ClientProductManager";
 import toast from "react-hot-toast";
 import "../styles/animations.css";
 
@@ -560,6 +563,22 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
   ] = useState<number>(0);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+  const [showMiniTienda, setShowMiniTienda] = useState(false);
+  const [showStoreConfig, setShowStoreConfig] = useState(false);
+  const [storeForm, setStoreForm] = useState({ nombre: '', slug: '' });
+  const [activeTab, setActiveTab] = useState('catalog');
+  const queryClient = useQueryClient();
+  
+  const configureStore = useConfigureStore({
+    onSuccess: () => {
+      toast.success('Tienda configurada exitosamente!');
+      setShowStoreConfig(false);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
   const {
     data: loansData,
     isLoading: isLoadingLoans,
@@ -748,11 +767,23 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
             Gestiona tus préstamos y pagos de forma sencilla y segura
           </p>
           {userData && (
-            <div className="mt-4 inline-flex items-center px-4 py-2 bg-white rounded-full shadow-md border border-slate-200">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white text-sm font-bold">{userData.nombre.charAt(0)}</span>
+            <div className="mt-4 flex flex-col items-center gap-4">
+              <div className="inline-flex items-center px-4 py-2 bg-white rounded-full shadow-md border border-slate-200">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white text-sm font-bold">{userData.nombre.charAt(0)}</span>
+                </div>
+                <span className="text-slate-700 font-medium">Bienvenido, {userData.nombre} {userData.apellido}</span>
               </div>
-              <span className="text-slate-700 font-medium">Bienvenido, {userData.nombre} {userData.apellido}</span>
+              
+              {/* Botón MiniTienda */}
+              <button 
+                onClick={() => setShowMiniTienda(true)}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                <span className="text-xl mr-2">🏪</span>
+                MiniTienda SmartCredit
+                <span className="ml-2 text-sm bg-white/20 px-2 py-1 rounded-full">Invierte tus intereses</span>
+              </button>
             </div>
           )}
         </div>
@@ -1006,6 +1037,236 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
           </div>
         )}
 
+        {/* MiniTienda Modal */}
+        {showMiniTienda && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto relative z-[999] animate-slideUp">
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-3xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mr-4">
+                      <span className="text-xl text-white">🏪</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800">MiniTienda SmartCredit</h3>
+                      <p className="text-slate-600">Invierte tus intereses y genera más ganancias</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowMiniTienda(false)}
+                    className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {/* Fondo Disponible */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-bold text-green-800 mb-1">💰 Tu Fondo Disponible</h4>
+                      <p className="text-green-600">Intereses acumulados listos para invertir</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-green-700">
+                        {Math.round(userData?.fondo_acumulado || 0).toLocaleString('es-PY')} Gs
+                      </p>
+                      <p className="text-sm text-green-600">Disponible para invertir</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Mensaje motivacional */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-6">
+                  <div className="text-center">
+                    <h4 className="text-xl font-bold text-blue-800 mb-2">🚀 ¡Haz que tu dinero trabaje para ti!</h4>
+                    <p className="text-blue-700 mb-4">
+                      Usa tus intereses acumulados para comprar productos y revenderlos. 
+                      <strong>Genera ingresos adicionales</strong> y sal del ciclo de endeudamiento.
+                    </p>
+                    <div className="flex justify-center items-center gap-8 text-sm">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">💰</span>
+                        <span className="text-blue-700">Inviertes con tus intereses</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">📊</span>
+                        <span className="text-blue-700">Revendes con ganancia</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">🎆</span>
+                        <span className="text-blue-700">Generas más ingresos</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Configuración de Tienda */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-6">
+                  <h4 className="text-lg font-bold text-purple-800 mb-3">🏪 Tu Tienda Online</h4>
+                  {userData?.tienda_activa ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <p className="font-medium text-purple-800">{userData.tienda_nombre || `Tienda de ${userData.nombre}`}</p>
+                          <p className="text-sm text-purple-600">/tienda/{userData.tienda_slug}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <a 
+                            href={`/tienda/${userData.tienda_slug}`} 
+                            target="_blank" 
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                          >
+                            🔗 Ver
+                          </a>
+                          <button 
+                            onClick={() => setShowStoreConfig(true)}
+                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+                          >
+                            ⚙️ Editar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-purple-700 mb-3">Activa tu tienda para vender productos online</p>
+                      <button 
+                        onClick={() => setShowStoreConfig(true)}
+                        className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium"
+                      >
+                        🚀 Activar Mi Tienda
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Pestañas de MiniTienda */}
+                <div className="mb-6">
+                  <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                    <button 
+                      onClick={() => setActiveTab('catalog')}
+                      className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                        activeTab === 'catalog' 
+                          ? 'bg-white text-purple-600 shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      🛒 Catálogo SmartCredit
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('myProducts')}
+                      className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                        activeTab === 'myProducts' 
+                          ? 'bg-white text-purple-600 shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      🏪 Mis Productos
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Contenido según pestaña activa */}
+                {activeTab === 'catalog' && (
+                  <ProductCatalog userId={userId} fondoDisponible={userData?.fondo_acumulado || 0} />
+                )}
+                
+                {activeTab === 'myProducts' && (
+                  <ClientProductManager />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Configuración de Tienda */}
+        {showStoreConfig && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[600] animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-[999] animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">🏪</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">Configurar Mi Tienda</h3>
+                  <p className="text-slate-600">Personaliza tu tienda online</p>
+                </div>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const nombre = storeForm.nombre || userData?.tienda_nombre || `Tienda de ${userData?.nombre}`;
+                const slug = storeForm.slug || userData?.tienda_slug || `${userData?.nombre?.toLowerCase().replace(/\s+/g, '-')}-${userData?.id}`;
+                configureStore.mutate({ tienda_nombre: nombre, tienda_slug: slug });
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre de tu tienda
+                  </label>
+                  <input
+                    type="text"
+                    value={storeForm.nombre}
+                    onChange={(e) => setStoreForm({...storeForm, nombre: e.target.value})}
+                    placeholder={userData?.tienda_nombre || `Tienda de ${userData?.nombre || 'Mi Tienda'}`}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enlace de tu tienda
+                  </label>
+                  <div className="flex">
+                    <span className="bg-gray-100 px-3 py-3 border border-r-0 rounded-l-lg text-sm text-gray-600">
+                      /tienda/
+                    </span>
+                    <input
+                      type="text"
+                      value={storeForm.slug}
+                      onChange={(e) => setStoreForm({...storeForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})}
+                      placeholder={userData?.tienda_slug || "mi-tienda"}
+                      className="flex-1 p-3 border rounded-r-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo letras, números y guiones. Ej: juan-perez
+                  </p>
+                </div>
+                
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                  >
+                    {userData?.tienda_activa ? '💾 Guardar Cambios' : '🚀 Activar Tienda'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowStoreConfig(false)}
+                    className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+              
+              <button
+                onClick={() => setShowStoreConfig(false)}
+                className="absolute top-4 right-4 w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all duration-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Pending Payment Modal */}
         {showPendingModal && selectedPayment && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[500] animate-fadeIn">
