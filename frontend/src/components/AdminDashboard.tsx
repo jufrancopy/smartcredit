@@ -343,7 +343,8 @@ const AdminDashboard: React.FC = () => {
             onSuccess={() => {
               setShowRenewalModal(false);
               setSelectedClientForRenewal(null);
-              refetch();
+              // Refrescar todos los datos
+              window.location.reload();
             }}
           />
         )}

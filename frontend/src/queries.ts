@@ -696,6 +696,12 @@ export const useCreateRenewalLoan = (options?: UseMutationOptions<any, Error, an
       }
       return res.json();
     },
+    onSuccess: (data, variables, context) => {
+      // Ejecutar callback personalizado si existe
+      if (options?.onSuccess) {
+        options.onSuccess(data, variables, context);
+      }
+    },
     ...options,
   });
 };

@@ -55,7 +55,10 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
     },
     onSuccess: (data) => {
       toast.success(`¡Renovación exitosa! Efectivo entregado: ${data.montoEfectivoEntregado.toLocaleString()} Gs`);
+      // Invalidar todas las queries relacionadas con préstamos y pagos
       queryClient.invalidateQueries({ queryKey: ['loans'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess();
     },
     onError: (error: any) => {
