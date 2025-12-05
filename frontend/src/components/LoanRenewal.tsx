@@ -201,7 +201,11 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
               </div>
               <div className="bg-white rounded-xl p-4">
                 <p className="text-sm text-slate-600">Cuota Diaria</p>
-                <p className="text-xl font-bold text-slate-800">{montoDiario.toLocaleString()} Gs</p>
+                <p className="text-xl font-bold text-slate-800">{formData.montoDiario.toLocaleString()} Gs</p>
+              </div>
+              <div className="bg-white rounded-xl p-4">
+                <p className="text-sm text-slate-600">Interés Total</p>
+                <p className="text-xl font-bold text-purple-600">{interesTotalPercent.toFixed(1)}%</p>
               </div>
               <div className="bg-white rounded-xl p-4">
                 <p className="text-sm text-slate-600">Deuda que se Paga</p>
