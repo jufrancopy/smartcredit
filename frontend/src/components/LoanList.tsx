@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FaFileInvoiceDollar, FaPlusCircle } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaPlusCircle, FaEdit } from 'react-icons/fa';
 import Modal from './Modal';
 import CreateLoanForm from './CreateLoanForm';
-import { useCheckRenewalEligibility } from '../queries';
+import EditLoanForm from './EditLoanForm';
+import { useCheckRenewalEligibility, useUpdateLoan } from '../queries';
 import toast from 'react-hot-toast';
 
 interface Loan {
@@ -27,10 +28,23 @@ interface LoanListProps {
 
 const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [checkingRenewal, setCheckingRenewal] = useState<number | null>(null);
+  const updateLoanMutation = useUpdateLoan();
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
+  
+  const handleEditLoan = (loan: Loan) => {
+    setEditingLoan(loan);
+    setIsEditModalOpen(true);
+  };
+  
+  const handleCloseEditModal = () => {
+    setEditingLoan(null);
+    setIsEditModalOpen(false);
+  };
 
   const handleCheckRenewal = async (loan: Loan) => {
     if (!onOpenRenewal) return;
@@ -115,22 +129,30 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
                   </span>
                 </td>
                 <td className="p-3">
-                  {loan.estado === 'activo' && onOpenRenewal && (
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => handleCheckRenewal(loan)}
-                      disabled={checkingRenewal === loan.id}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-lg text-sm hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 disabled:opacity-50"
+                      onClick={() => handleEditLoan(loan)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600 transition-all transform hover:scale-105 flex items-center"
                     >
-                      {checkingRenewal === loan.id ? (
-                        <div className="flex items-center">
-                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                          Verificando...
-                        </div>
-                      ) : (
-                        '🔄 Renovar'
-                      )}
+                      <FaEdit className="mr-1" /> Editar
                     </button>
-                  )}
+                    {loan.estado === 'activo' && onOpenRenewal && (
+                      <button
+                        onClick={() => handleCheckRenewal(loan)}
+                        disabled={checkingRenewal === loan.id}
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-lg text-sm hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 disabled:opacity-50"
+                      >
+                        {checkingRenewal === loan.id ? (
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                            Verificando...
+                          </div>
+                        ) : (
+                          '🔄 Renovar'
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -140,6 +162,10 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Crear Nuevo Préstamo">
         <CreateLoanForm onSuccess={handleCloseModal} />
+      </Modal>
+      
+      <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Editar Préstamo">
+        {editingLoan && <EditLoanForm loan={editingLoan} onSuccess={handleCloseEditModal} />}
       </Modal>
     </div>
   );

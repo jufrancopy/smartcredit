@@ -229,4 +229,74 @@ router.get('/loans/by-status', authenticateToken, async (req: AuthRequest, res) 
   }
 });
 
+// Update loan
+router.put('/loans/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Solo administradores pueden editar préstamos' });
+    }
+
+    const { id } = req.params;
+    const { monto_principal, interes_total_percent, plazo_dias, monto_diario, fecha_inicio_cobro } = req.body;
+    
+    const loanId = parseInt(id);
+    
+    // Verificar que el préstamo existe
+    const existingLoan = await prisma.loan.findUnique({
+      where: { id: loanId },
+      include: { installments: true }
+    });
+    
+    if (!existingLoan) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+    
+    const total_a_devolver = monto_diario * plazo_dias;
+    
+    await prisma.$transaction(async (tx) => {
+      // Actualizar el préstamo
+      await tx.loan.update({
+        where: { id: loanId },
+        data: {
+          monto_principal,
+          interes_total_percent,
+          total_a_devolver,
+          plazo_dias,
+          monto_diario,
+          fecha_inicio_cobro: new Date(fecha_inicio_cobro)
+        }
+      });
+      
+      // Eliminar cuotas existentes
+      await tx.installment.deleteMany({
+        where: { loanId }
+      });
+      
+      // Crear nuevas cuotas
+      const installments = [];
+      const startDate = new Date(fecha_inicio_cobro);
+      
+      for (let i = 0; i < plazo_dias; i++) {
+        const installmentDate = new Date(startDate);
+        installmentDate.setDate(startDate.getDate() + i);
+        
+        installments.push({
+          loanId,
+          fecha: installmentDate,
+          monto_expected: monto_diario,
+          monto_pagado: 0,
+          status: 'pendiente' as const
+        });
+      }
+      
+      await tx.installment.createMany({ data: installments });
+    });
+    
+    res.json({ message: 'Préstamo actualizado exitosamente' });
+  } catch (error) {
+    console.error('Error updating loan:', error);
+    res.status(500).json({ error: 'Error al actualizar préstamo' });
+  }
+});
+
 export default router;

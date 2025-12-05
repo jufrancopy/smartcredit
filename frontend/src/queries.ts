@@ -741,6 +741,28 @@ export const useGetLoansByStatus = () => {
   });
 };
 
+// Update loan
+export const useUpdateLoan = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async ({ id, ...loanData }: any) => {
+      const res = await fetch(`${API_URL}/loans/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(loanData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar préstamo');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
 export const downloadLoanPDF = async (loanId: number) => {
   try {
     const res = await fetch(`${API_URL}/pdf/loan/${loanId}`, {
