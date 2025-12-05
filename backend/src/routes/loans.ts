@@ -322,4 +322,64 @@ router.put('/loans/:id', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+// Delete loan
+router.delete('/loans/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Solo administradores pueden eliminar préstamos' });
+    }
+
+    const { id } = req.params;
+    const loanId = parseInt(id);
+    
+    // Verificar que el préstamo existe
+    const existingLoan = await prisma.loan.findUnique({
+      where: { id: loanId },
+      include: { installments: { include: { payments: true } } }
+    });
+    
+    if (!existingLoan) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+    
+    // Verificar si tiene pagos confirmados
+    const hasConfirmedPayments = existingLoan.installments.some(inst => 
+      inst.payments.some(payment => payment.confirmado)
+    );
+    
+    if (hasConfirmedPayments) {
+      return res.status(400).json({ error: 'No se puede eliminar un préstamo con pagos confirmados' });
+    }
+    
+    await prisma.$transaction(async (tx) => {
+      // Eliminar pagos primero
+      await tx.payment.deleteMany({
+        where: {
+          installment: {
+            loanId: loanId
+          }
+        }
+      });
+      
+      // Eliminar cuotas
+      await tx.installment.deleteMany({
+        where: { loanId }
+      });
+      
+      // Eliminar préstamo
+      await tx.loan.delete({
+        where: { id: loanId }
+      });
+    });
+    
+    res.json({ message: 'Préstamo eliminado exitosamente' });
+  } catch (error: any) {
+    console.error('Error deleting loan:', error);
+    res.status(500).json({ 
+      error: 'Error al eliminar préstamo',
+      details: error.message 
+    });
+  }
+});
+
 export default router;

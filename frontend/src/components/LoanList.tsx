@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaFileInvoiceDollar, FaPlusCircle, FaEdit } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaPlusCircle, FaEdit, FaTrash } from 'react-icons/fa';
 import Modal from './Modal';
 import CreateLoanForm from './CreateLoanForm';
 import EditLoanForm from './EditLoanForm';
@@ -32,6 +32,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [checkingRenewal, setCheckingRenewal] = useState<number | null>(null);
+  const [deletingLoan, setDeletingLoan] = useState<number | null>(null);
   const updateLoanMutation = useUpdateLoan();
   
   // Obtener el préstamo más reciente por cliente
@@ -110,6 +111,34 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
     }
   };
 
+  const handleDeleteLoan = async (loan: Loan) => {
+    if (!confirm(`¿Estás seguro de eliminar el préstamo de ${loan.user.nombre}?`)) {
+      return;
+    }
+    
+    setDeletingLoan(loan.id);
+    try {
+      const response = await fetch(`/api/loans/${loan.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar préstamo');
+      }
+      
+      toast.success('Préstamo eliminado exitosamente');
+      window.location.reload(); // Recargar para actualizar la lista
+    } catch (error: any) {
+      toast.error(error.message || 'Error al eliminar préstamo');
+    } finally {
+      setDeletingLoan(null);
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
       <div className="flex justify-between items-center mb-4">
@@ -171,6 +200,20 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
                         )}
                       </button>
                     )}
+                    <button
+                      onClick={() => handleDeleteLoan(loan)}
+                      disabled={deletingLoan === loan.id}
+                      className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-all transform hover:scale-105 disabled:opacity-50 flex items-center"
+                    >
+                      {deletingLoan === loan.id ? (
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                          Eliminando...
+                        </div>
+                      ) : (
+                        <><FaTrash className="mr-1" /> Eliminar</>
+                      )}
+                    </button>
                   </div>
                 </td>
               </tr>
