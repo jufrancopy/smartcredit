@@ -134,10 +134,12 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
                 Nuevo Monto Principal (Gs)
               </label>
               <input
-                type="number"
-                value={formData.nuevoMontoPrincipal}
-                onChange={(e) => setFormData({...formData, nuevoMontoPrincipal: parseInt(e.target.value)})}
-                min={eligibilityData.totalPendingDebt + 1}
+                type="text"
+                value={formData.nuevoMontoPrincipal.toLocaleString()}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({...formData, nuevoMontoPrincipal: parseInt(value) || 0});
+                }}
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
@@ -151,11 +153,12 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
                 Monto Diario (Gs)
               </label>
               <input
-                type="number"
-                value={formData.montoDiario}
-                onChange={(e) => setFormData({...formData, montoDiario: parseInt(e.target.value)})}
-                min="1000"
-                step="1000"
+                type="text"
+                value={formData.montoDiario.toLocaleString()}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({...formData, montoDiario: parseInt(value) || 0});
+                }}
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
