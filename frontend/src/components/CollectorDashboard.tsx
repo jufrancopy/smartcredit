@@ -450,6 +450,182 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
     </div>
   );
 };
+// Componente para las pestañas de préstamos
+interface LoanTabsProps {
+  debtors: Debtor[];
+  handleOpenConfirmPaymentModal: (paymentId: number, installmentId: number, monto: number, comprobante_url: string | undefined, debtorName: string) => void;
+  handleUploadReceipt: (installmentId: number, expectedMonto: number, debtorId: number, debtorName: string, installmentNumber: number) => void;
+  handleOpenReceiptsModal: (installment: InstallmentForCollector) => void;
+  handleDownloadPDF: (installments: InstallmentForCollector[]) => void;
+}
+
+const LoanTabs: React.FC<LoanTabsProps> = ({ 
+  debtors, 
+  handleOpenConfirmPaymentModal, 
+  handleUploadReceipt, 
+  handleOpenReceiptsModal, 
+  handleDownloadPDF 
+}) => {
+  const [activeSubTab, setActiveSubTab] = useState('activos');
+  
+  // Separar préstamos activos y finiquitados
+  const activeDebtors = debtors.filter(debtor => debtor.amountDue > 0);
+  const finishedDebtors = debtors.filter(debtor => debtor.amountDue <= 0);
+  
+  const renderDebtorCard = (debtor: Debtor) => (
+    <div key={debtor.id} className="bg-white rounded-3xl shadow-2xl border border-slate-100 hover:shadow-3xl transition-all transform hover:scale-[1.02] duration-500 overflow-hidden">
+      {/* Card Header */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full -translate-y-20 translate-x-20"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full translate-y-16 -translate-x-16"></div>
+        <div className="relative z-10">
+          <div className="flex items-start">
+            {debtor.foto_url ? (
+              <img 
+                src={`${import.meta.env.VITE_API_BASE_URL}${debtor.foto_url}`} 
+                alt={debtor.name} 
+                className="w-20 h-20 rounded-2xl mr-6 border-3 border-white/20 object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mr-6 flex items-center justify-center shadow-lg">
+                <span className="text-2xl text-white font-bold">{debtor.name.charAt(0)}</span>
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-2xl text-white mb-2">{debtor.name}</h3>
+                  <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+                    <span className="text-slate-300 text-sm">ID: {debtor.id}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <p className="text-slate-300 text-xs font-medium mb-1">💰 Prestado</p>
+                  <p className="text-xl font-bold text-white">
+                    {debtor.loans.reduce((sum, l) => sum + l.monto_principal, 0).toLocaleString('es-PY')} Gs
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <p className="text-slate-300 text-xs font-medium mb-1">📅 Diario</p>
+                  <p className="text-xl font-bold text-white">
+                    {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} Gs
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <p className="text-slate-300 text-xs font-medium mb-1">💳 Total Deuda</p>
+                  <p className={`text-2xl font-bold ${
+                    debtor.amountDue > 0 ? 'text-emerald-400' : 'text-green-400'
+                  }`}>
+                    {debtor.amountDue.toLocaleString('es-PY')} Gs
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                  <p className="text-slate-300 text-xs font-medium mb-1">✅ Total Pagado</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {debtor.totalPaid.toLocaleString('es-PY')} Gs
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="p-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center">
+            <span className="text-xl text-white">📅</span>
+          </div>
+          <div>
+            <h4 className="text-xl font-bold text-slate-800">Calendario de Pagos</h4>
+            <p className="text-slate-600">Gestiona las cuotas del cliente</p>
+          </div>
+        </div>
+        <ElegantPaymentCalendar 
+          installments={debtor.installments} 
+          onOpenConfirmPaymentModal={handleOpenConfirmPaymentModal} 
+          onUploadReceipt={handleUploadReceipt}
+          showUploadButton={activeSubTab === 'activos'}
+          onOpenReceiptsModal={handleOpenReceiptsModal}
+          onDownloadPDF={handleDownloadPDF}
+        />
+      </div>
+    </div>
+  );
+  
+  return (
+    <>
+      {/* Sub-pestañas */}
+      <div className="mb-8">
+        <div className="bg-white rounded-2xl shadow-lg p-2">
+          <nav className="flex space-x-2" aria-label="Sub Tabs">
+            <button
+              onClick={() => setActiveSubTab('activos')}
+              className={`${
+                activeSubTab === 'activos'
+                  ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2`}
+            >
+              <span>💳</span> Préstamos Activos ({activeDebtors.length})
+            </button>
+            <button
+              onClick={() => setActiveSubTab('finiquitados')}
+              className={`${
+                activeSubTab === 'finiquitados'
+                  ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2`}
+            >
+              <span>✅</span> Préstamos Finiquitados ({finishedDebtors.length})
+            </button>
+          </nav>
+        </div>
+      </div>
+      
+      {/* Contenido según pestaña activa */}
+      {activeSubTab === 'activos' && (
+        activeDebtors.length === 0 ? (
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-16 text-center shadow-2xl border border-slate-200">
+            <div className="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl text-white">💳</span>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 mb-3">No hay Préstamos Activos</h3>
+            <p className="text-slate-600 text-lg max-w-md mx-auto">
+              Todos los préstamos han sido finiquitados o aún no tienes clientes asignados.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {activeDebtors.map(renderDebtorCard)}
+          </div>
+        )
+      )}
+      
+      {activeSubTab === 'finiquitados' && (
+        finishedDebtors.length === 0 ? (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-3xl p-16 text-center shadow-2xl border border-green-200">
+            <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl text-white">✅</span>
+            </div>
+            <h3 className="text-2xl font-bold text-green-800 mb-3">No hay Préstamos Finiquitados</h3>
+            <p className="text-green-700 text-lg max-w-md mx-auto">
+              Los préstamos completamente pagados aparecerán aquí.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {finishedDebtors.map(renderDebtorCard)}
+          </div>
+        )
+      )}
+    </>
+  );
+};
+
 // Resto de las interfaces y código existente...
 interface PaymentToConfirm {
   paymentId: number;
@@ -905,101 +1081,15 @@ const CollectorDashboard: React.FC = () => {
                   <p className="text-slate-600">Gestiona los pagos de cada cliente</p>
                 </div>
               </div>
-            {debtors.length === 0 ? (
-              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl p-16 text-center shadow-2xl border border-slate-200">
-                <div className="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-4xl text-white">💳</span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3">No hay Clientes</h3>
-                <p className="text-slate-600 text-lg max-w-md mx-auto">
-                  Aún no tienes clientes registrados. Los clientes aparecerán aquí cuando se les asignen préstamos.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {debtors.map((debtor) => (
-                  <div key={debtor.id} className="bg-white rounded-3xl shadow-2xl border border-slate-100 hover:shadow-3xl transition-all transform hover:scale-[1.02] duration-500 overflow-hidden">
-                    {/* Card Header */}
-                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full -translate-y-20 translate-x-20"></div>
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full translate-y-16 -translate-x-16"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-start">
-                          {debtor.foto_url ? (
-                            <img 
-                              src={`${import.meta.env.VITE_API_BASE_URL}${debtor.foto_url}`} 
-                              alt={debtor.name} 
-                              className="w-20 h-20 rounded-2xl mr-6 border-3 border-white/20 object-cover shadow-lg"
-                            />
-                          ) : (
-                            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mr-6 flex items-center justify-center shadow-lg">
-                              <span className="text-2xl text-white font-bold">{debtor.name.charAt(0)}</span>
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-bold text-2xl text-white mb-2">{debtor.name}</h3>
-                                <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                                  <span className="text-slate-300 text-sm">ID: {debtor.id}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 mt-6">
-                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                                <p className="text-slate-300 text-xs font-medium mb-1">💰 Prestado</p>
-                                <p className="text-xl font-bold text-white">
-                                  {debtor.loans.reduce((sum, l) => sum + l.monto_principal, 0).toLocaleString('es-PY')} Gs
-                                </p>
-                              </div>
-                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                                <p className="text-slate-300 text-xs font-medium mb-1">📅 Diario</p>
-                                <p className="text-xl font-bold text-white">
-                                  {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} Gs
-                                </p>
-                              </div>
-                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                                <p className="text-slate-300 text-xs font-medium mb-1">💳 Total Deuda</p>
-                                <p className="text-2xl font-bold text-emerald-400">
-                                  {debtor.amountDue.toLocaleString('es-PY')} Gs
-                                </p>
-                              </div>
-                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                                <p className="text-slate-300 text-xs font-medium mb-1">✅ Total Pagado</p>
-                                <p className="text-2xl font-bold text-green-400">
-                                  {debtor.totalPaid.toLocaleString('es-PY')} Gs
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+              
+              {/* Sub-tabs para préstamos activos y finiquitados */}
+              <LoanTabs debtors={debtors} 
+                handleOpenConfirmPaymentModal={handleOpenConfirmPaymentModal}
+                handleUploadReceipt={handleUploadReceipt}
+                handleOpenReceiptsModal={handleOpenReceiptsModal}
+                handleDownloadPDF={handleDownloadPDF}
+              />
 
-                    {/* Card Body */}
-                    <div className="p-8">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                          <span className="text-xl text-white">📅</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-800">Calendario de Pagos</h4>
-                          <p className="text-slate-600">Gestiona las cuotas del cliente</p>
-                        </div>
-                      </div>
-                      <ElegantPaymentCalendar 
-                        installments={debtor.installments} 
-                        onOpenConfirmPaymentModal={handleOpenConfirmPaymentModal} 
-                        onUploadReceipt={handleUploadReceipt}
-                        showUploadButton={true}
-                        onOpenReceiptsModal={handleOpenReceiptsModal}
-                        onDownloadPDF={handleDownloadPDF}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
             </div>
           )}
 
