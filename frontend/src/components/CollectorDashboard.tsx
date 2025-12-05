@@ -628,7 +628,8 @@ const CollectorDashboard: React.FC = () => {
       }
       
       // Buscar el loan que contiene estos installments
-      const loanWithInstallments = loans?.find((loan: any) => 
+      const allLoans = [...prestamosNuevos, ...prestamosExistentes];
+      const loanWithInstallments = allLoans?.find((loan: any) => 
         loan.installments.some((inst: any) => 
           installments.some(targetInst => targetInst.id === inst.id)
         )

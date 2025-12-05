@@ -10,16 +10,36 @@ const getAuthHeaders = () => {
 };
 
 // Fetch all loans
-export const useGetLoans = (userId?: number) => {
+export const useGetLoans = (userId?: number, filtros?: { nuevos?: boolean; desde?: string }) => {
   return useQuery({
-    queryKey: ['loans', userId],
+    queryKey: ['loans', userId, filtros],
     queryFn: async () => {
-      const url = userId ? `${API_URL}/loans?userId=${userId}` : `${API_URL}/loans`;
+      let url = `${API_URL}/loans`;
+      const params = new URLSearchParams();
+      
+      if (userId) {
+        params.append('userId', userId.toString());
+      }
+      
+      if (filtros?.nuevos) {
+        params.append('nuevos', 'true');
+      }
+      
+      if (filtros?.desde) {
+        params.append('desde', filtros.desde);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
       const res = await fetch(url, { headers: getAuthHeaders() });
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }
-      return res.json();
+      const data = await res.json();
+      // Mantener compatibilidad con el formato anterior
+      return data.loans || data;
     },
   });
 };
@@ -707,6 +727,20 @@ export const useCreateRenewalLoan = (options?: UseMutationOptions<any, Error, an
 };
 
 // Download loan PDF
+// Fetch loans by status (nuevos vs existentes)
+export const useGetLoansByStatus = () => {
+  return useQuery({
+    queryKey: ['loans-by-status'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/loans/by-status`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 export const downloadLoanPDF = async (loanId: number) => {
   try {
     const res = await fetch(`${API_URL}/pdf/loan/${loanId}`, {
