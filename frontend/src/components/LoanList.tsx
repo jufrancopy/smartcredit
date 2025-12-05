@@ -12,6 +12,7 @@ interface Loan {
   interes_total_percent: number;
   total_a_devolver: number;
   estado: string;
+  createdAt?: string;
   user: {
     id: number;
     nombre: string;
@@ -32,6 +33,24 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [checkingRenewal, setCheckingRenewal] = useState<number | null>(null);
   const updateLoanMutation = useUpdateLoan();
+  
+  // Obtener el préstamo más reciente por cliente
+  const getLatestLoanByUser = (userId: number) => {
+    const userLoans = loans.filter(loan => loan.user.id === userId && loan.estado === 'activo');
+    return userLoans.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0];
+  };
+  
+  // Verificar si debe mostrar botón renovar
+  const shouldShowRenewalButton = (loan: Loan) => {
+    const latestLoan = getLatestLoanByUser(loan.user.id);
+    if (!latestLoan || latestLoan.id !== loan.id) return false;
+    
+    // Verificar porcentaje de pago
+    const totalPaid = loan.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
+    const paymentPercentage = totalPaid / loan.total_a_devolver;
+    
+    return paymentPercentage >= 0.9; // 90% mínimo
+  };
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -136,7 +155,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
                     >
                       <FaEdit className="mr-1" /> Editar
                     </button>
-                    {loan.estado === 'activo' && onOpenRenewal && (
+                    {loan.estado === 'activo' && onOpenRenewal && shouldShowRenewalButton(loan) && (
                       <button
                         onClick={() => handleCheckRenewal(loan)}
                         disabled={checkingRenewal === loan.id}

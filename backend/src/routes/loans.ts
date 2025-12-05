@@ -244,58 +244,81 @@ router.put('/loans/:id', authenticateToken, async (req: AuthRequest, res) => {
     // Verificar que el préstamo existe
     const existingLoan = await prisma.loan.findUnique({
       where: { id: loanId },
-      include: { installments: true }
+      include: { installments: { include: { payments: true } } }
     });
     
     if (!existingLoan) {
       return res.status(404).json({ error: 'Préstamo no encontrado' });
     }
     
+    // Verificar si tiene pagos realizados
+    const hasPayments = existingLoan.installments.some(inst => 
+      inst.payments.length > 0 || inst.monto_pagado > 0
+    );
+    
     const total_a_devolver = monto_diario * plazo_dias;
     
-    await prisma.$transaction(async (tx) => {
-      // Actualizar el préstamo
-      await tx.loan.update({
+    if (hasPayments) {
+      // Solo actualizar campos del préstamo, no tocar cuotas ni pagos
+      await prisma.loan.update({
         where: { id: loanId },
         data: {
           monto_principal,
           interes_total_percent,
           total_a_devolver,
-          plazo_dias,
-          monto_diario,
-          fecha_inicio_cobro: new Date(fecha_inicio_cobro)
+          monto_diario
+          // NO actualizar plazo_dias ni fecha_inicio_cobro si hay pagos
         }
       });
-      
-      // Eliminar cuotas existentes
-      await tx.installment.deleteMany({
-        where: { loanId }
-      });
-      
-      // Crear nuevas cuotas
-      const installments = [];
-      const startDate = new Date(fecha_inicio_cobro);
-      
-      for (let i = 0; i < plazo_dias; i++) {
-        const installmentDate = new Date(startDate);
-        installmentDate.setDate(startDate.getDate() + i);
-        
-        installments.push({
-          loanId,
-          fecha: installmentDate,
-          monto_expected: monto_diario,
-          monto_pagado: 0,
-          status: 'pendiente' as const
+    } else {
+      // Si no hay pagos, permitir edición completa
+      await prisma.$transaction(async (tx) => {
+        // Actualizar el préstamo
+        await tx.loan.update({
+          where: { id: loanId },
+          data: {
+            monto_principal,
+            interes_total_percent,
+            total_a_devolver,
+            plazo_dias,
+            monto_diario,
+            fecha_inicio_cobro: new Date(fecha_inicio_cobro)
+          }
         });
-      }
-      
-      await tx.installment.createMany({ data: installments });
-    });
+        
+        // Eliminar cuotas existentes
+        await tx.installment.deleteMany({
+          where: { loanId }
+        });
+        
+        // Crear nuevas cuotas
+        const installments = [];
+        const startDate = new Date(fecha_inicio_cobro);
+        
+        for (let i = 0; i < plazo_dias; i++) {
+          const installmentDate = new Date(startDate);
+          installmentDate.setDate(startDate.getDate() + i);
+          
+          installments.push({
+            loanId,
+            fecha: installmentDate,
+            monto_expected: monto_diario,
+            monto_pagado: 0,
+            status: 'pendiente' as const
+          });
+        }
+        
+        await tx.installment.createMany({ data: installments });
+      });
+    }
     
     res.json({ message: 'Préstamo actualizado exitosamente' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating loan:', error);
-    res.status(500).json({ error: 'Error al actualizar préstamo' });
+    res.status(500).json({ 
+      error: 'Error al actualizar préstamo',
+      details: error.message 
+    });
   }
 });
 
