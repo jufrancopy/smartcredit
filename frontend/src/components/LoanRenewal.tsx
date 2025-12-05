@@ -28,7 +28,7 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     nuevoMontoPrincipal: eligibilityData.totalPendingDebt + 100000, // Deuda + 100k mínimo
-    montoDiario: 30000,
+    montoDiario: Math.round((eligibilityData.totalPendingDebt + 100000) * 1.2 / 30), // Aproximadamente 20% interés
     plazoDias: 30,
     fechaInicioCobro: new Date().toISOString().split('T')[0]
   });
@@ -86,7 +86,7 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
 
   const montoEfectivo = formData.nuevoMontoPrincipal - eligibilityData.totalPendingDebt;
   const totalADevolver = formData.montoDiario * formData.plazoDias;
-  const interesTotalPercent = totalADevolver > formData.nuevoMontoPrincipal && formData.nuevoMontoPrincipal > 0 ? 
+  const interesTotalPercent = formData.nuevoMontoPrincipal > 0 ? 
     ((totalADevolver - formData.nuevoMontoPrincipal) / formData.nuevoMontoPrincipal * 100) : 0;
 
   return (
@@ -114,9 +114,9 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-6">
           <h4 className="text-lg font-bold text-amber-800 mb-4">📋 Deuda Pendiente</h4>
           <div className="space-y-2">
-            {eligibilityData.eligibleLoans.map(loan => (
+            {eligibilityData.eligibleLoans.map((loan, index) => (
               <div key={loan.id} className="flex justify-between text-sm">
-                <span>Préstamo #{loan.id}</span>
+                <span>Préstamo #{index + 1}</span>
                 <span className="font-bold">{loan.pendingDebt.toLocaleString()} Gs</span>
               </div>
             ))}
