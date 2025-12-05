@@ -9,10 +9,15 @@ interface Loan {
   id: number;
   monto_principal: number;
   interes_total_percent: number;
+  total_a_devolver: number;
   estado: string;
   user: {
+    id: number;
     nombre: string;
   };
+  installments?: Array<{
+    monto_pagado: number;
+  }>;
 }
 
 interface LoanListProps {
@@ -32,6 +37,16 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
     
     setCheckingRenewal(loan.id);
     try {
+      // Verificación local primero
+      const totalPaid = loan.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
+      const paymentPercentage = totalPaid / loan.total_a_devolver;
+      
+      console.log('Verificación local:', {
+        totalPaid,
+        totalADevolver: loan.total_a_devolver,
+        percentage: (paymentPercentage * 100).toFixed(1) + '%'
+      });
+      
       const response = await fetch(`/api/loan-renewal/check-eligibility/${loan.user.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -44,6 +59,8 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
       
       const eligibilityData = await response.json();
       
+      console.log('Respuesta del servidor:', eligibilityData);
+      
       if (eligibilityData.eligible) {
         onOpenRenewal({
           id: loan.user.id,
@@ -51,7 +68,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
           eligibilityData
         });
       } else {
-        toast.error('Cliente no elegible para renovación. Debe tener al menos el 90% del préstamo pagado.');
+        toast.error(`Cliente no elegible. Pagado: ${(paymentPercentage * 100).toFixed(1)}% (necesita 90%)`);
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al verificar elegibilidad');

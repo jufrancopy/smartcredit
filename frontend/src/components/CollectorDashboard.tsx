@@ -463,6 +463,7 @@ interface Debtor {
   id: number;
   name: string;
   amountDue: number;
+  totalPaid: number;
   installments: Installment[];
   foto_url?: string;
   loans: { id: number; monto_principal: number; monto_diario: number }[];
@@ -651,6 +652,7 @@ const CollectorDashboard: React.FC = () => {
           id: loan.user.id,
           name: `${loan.user.nombre} ${loan.user.apellido}`,
           amountDue: 0,
+          totalPaid: 0,
           installments: [],
           foto_url: loan.user.foto_url,
           loans: [],
@@ -664,6 +666,7 @@ const CollectorDashboard: React.FC = () => {
       const totalPagadoEstePrestamo = loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
       const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
       debtor.amountDue += deudaPendienteEstePrestamo;
+      debtor.totalPaid += totalPagadoEstePrestamo;
       
       const processedInstallments: InstallmentForCollector[] = loan.installments
         .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
@@ -947,10 +950,16 @@ const CollectorDashboard: React.FC = () => {
                                   {debtor.loans.reduce((sum, l) => sum + l.monto_diario, 0).toLocaleString('es-PY')} Gs
                                 </p>
                               </div>
-                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 col-span-2">
+                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
                                 <p className="text-slate-300 text-xs font-medium mb-1">💳 Total Deuda</p>
-                                <p className="text-3xl font-bold text-emerald-400">
+                                <p className="text-2xl font-bold text-emerald-400">
                                   {debtor.amountDue.toLocaleString('es-PY')} Gs
+                                </p>
+                              </div>
+                              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                                <p className="text-slate-300 text-xs font-medium mb-1">✅ Total Pagado</p>
+                                <p className="text-2xl font-bold text-green-400">
+                                  {debtor.totalPaid.toLocaleString('es-PY')} Gs
                                 </p>
                               </div>
                             </div>

@@ -36,6 +36,14 @@ export const checkRenewalEligibility = async (req: AuthRequest, res: Response) =
       const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
       const paymentPercentage = totalPaid / loan.total_a_devolver;
       
+      console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`, {
+        totalPaid,
+        totalADevolver: loan.total_a_devolver,
+        percentage: (paymentPercentage * 100).toFixed(1) + '%',
+        remainingInstallments,
+        eligible: remainingInstallments <= 1 || paymentPercentage >= 0.9
+      });
+      
       // Elegible si queda 1 cuota o más del 90% del total pagado
       return remainingInstallments <= 1 || paymentPercentage >= 0.9;
     });
