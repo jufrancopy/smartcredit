@@ -49,6 +49,18 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
     const totalPaid = loan.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
     const paymentPercentage = totalPaid / loan.total_a_devolver;
     
+    // Debug para el cliente con 450,000 pagado
+    if (totalPaid > 400000) {
+      console.log(`DEBUG - Cliente: ${loan.user.nombre}`, {
+        totalPaid,
+        total_a_devolver: loan.total_a_devolver,
+        monto_principal: loan.monto_principal,
+        percentage: (paymentPercentage * 100).toFixed(1) + '%',
+        cumple90: paymentPercentage >= 0.9,
+        installments: loan.installments
+      });
+    }
+    
     return paymentPercentage >= 0.9; // 90% mínimo
   };
 
