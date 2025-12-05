@@ -33,6 +33,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [checkingRenewal, setCheckingRenewal] = useState<number | null>(null);
   const [deletingLoan, setDeletingLoan] = useState<number | null>(null);
+  const [confirmDeleteLoan, setConfirmDeleteLoan] = useState<Loan | null>(null);
   const updateLoanMutation = useUpdateLoan();
   
   // Obtener el préstamo más reciente por cliente
@@ -112,10 +113,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   };
 
   const handleDeleteLoan = async (loan: Loan) => {
-    if (!confirm(`¿Estás seguro de eliminar el préstamo de ${loan.user.nombre}?`)) {
-      return;
-    }
-    
+    setConfirmDeleteLoan(null);
     setDeletingLoan(loan.id);
     try {
       const response = await fetch(`/api/loans/${loan.id}`, {
@@ -201,7 +199,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
                       </button>
                     )}
                     <button
-                      onClick={() => handleDeleteLoan(loan)}
+                      onClick={() => setConfirmDeleteLoan(loan)}
                       disabled={deletingLoan === loan.id}
                       className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-all transform hover:scale-105 disabled:opacity-50 flex items-center"
                     >
@@ -229,6 +227,39 @@ const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
       <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Editar Préstamo">
         {editingLoan && <EditLoanForm loan={editingLoan} onSuccess={handleCloseEditModal} />}
       </Modal>
+      
+      {/* Modal de confirmación con DaisyUI */}
+      <dialog className={`modal ${confirmDeleteLoan ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg text-error">¡Confirmar eliminación!</h3>
+          <p className="py-4">
+            ¿Estás seguro de eliminar el préstamo de <strong>{confirmDeleteLoan?.user.nombre}</strong>?
+            <br />
+            <span className="text-sm opacity-70">Monto: ${confirmDeleteLoan?.monto_principal.toLocaleString()} - Esta acción no se puede deshacer.</span>
+          </p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-ghost" 
+              onClick={() => setConfirmDeleteLoan(null)}
+            >
+              Cancelar
+            </button>
+            <button 
+              className="btn btn-error" 
+              onClick={() => confirmDeleteLoan && handleDeleteLoan(confirmDeleteLoan)}
+              disabled={deletingLoan === confirmDeleteLoan?.id}
+            >
+              {deletingLoan === confirmDeleteLoan?.id ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : null}
+              Eliminar
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setConfirmDeleteLoan(null)}>close</button>
+        </form>
+      </dialog>
     </div>
   );
 };
