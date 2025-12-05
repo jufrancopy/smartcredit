@@ -497,6 +497,8 @@ const CollectorDashboard: React.FC = () => {
   const [showAllInstallments, setShowAllInstallments] = useState(false); // State for "Todas las Cuotas" modal
   const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
   const [selectedPaymentToEdit, setSelectedPaymentToEdit] = useState<any | null>(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<any | null>(null);
   const [accumulatedEarnings, setAccumulatedEarnings] = useState<number>(() => {
     const savedEarnings = localStorage.getItem('accumulatedCollectorEarnings');
     return savedEarnings ? parseFloat(savedEarnings) : 0;
@@ -538,12 +540,19 @@ const CollectorDashboard: React.FC = () => {
     refetch();
   };
 
-  const handleDeletePayment = async (paymentId: number) => {
-    if (window.confirm('¿Estás seguro de que quieres borrar este pago? Esta acción no se puede deshacer.')) {
+  const handleDeletePayment = (payment: any) => {
+    setPaymentToDelete(payment);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const confirmDeletePayment = async () => {
+    if (paymentToDelete) {
       try {
-        await deletePaymentMutation.mutateAsync(paymentId);
+        await deletePaymentMutation.mutateAsync(paymentToDelete.id);
         toast.success('Pago borrado exitosamente');
         setShowReceiptsModal(false);
+        setShowDeleteConfirmModal(false);
+        setPaymentToDelete(null);
         refetch();
       } catch (error) {
         console.error('Error deleting payment:', error);
@@ -1191,17 +1200,12 @@ const CollectorDashboard: React.FC = () => {
                           Editar
                         </button>
                         <button
-                          onClick={() => handleDeletePayment(payment.id)}
+                          onClick={() => handleDeletePayment(payment)}
                           className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-xl hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 font-medium text-sm flex items-center shadow-md"
-                          disabled={deletePaymentMutation.isLoading}
                         >
-                          {deletePaymentMutation.isLoading ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          ) : (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          )}
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                           Borrar
                         </button>
                       </div>
@@ -1290,6 +1294,69 @@ const CollectorDashboard: React.FC = () => {
                     onSuccess={() => toast.success('¡Comprobante actualizado exitosamente!')}
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación para borrar pago */}
+        {showDeleteConfirmModal && paymentToDelete && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[800] p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md animate-slideUp">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mr-4">
+                  <span className="text-xl text-white">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-800">Confirmar Eliminación</h3>
+                  <p className="text-slate-600">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
+                <div className="flex items-center mb-3">
+                  <span className="text-red-600 font-semibold">Pago a eliminar:</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">ID:</span>
+                    <span className="font-bold">#{paymentToDelete.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Monto:</span>
+                    <span className="font-bold text-red-600">{paymentToDelete.monto?.toLocaleString('es-PY')} Gs</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Fecha:</span>
+                    <span className="font-bold">{new Date(paymentToDelete.createdAt).toLocaleDateString('es-PY')}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmModal(false);
+                    setPaymentToDelete(null);
+                  }}
+                  className="flex-1 bg-slate-200 text-slate-700 py-3 px-6 rounded-xl hover:bg-slate-300 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeletePayment}
+                  disabled={deletePaymentMutation.isLoading}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-6 rounded-xl hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 font-bold shadow-lg disabled:opacity-50"
+                >
+                  {deletePaymentMutation.isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Eliminando...
+                    </div>
+                  ) : (
+                    '🗑️ Eliminar Pago'
+                  )}
+                </button>
               </div>
             </div>
           </div>
