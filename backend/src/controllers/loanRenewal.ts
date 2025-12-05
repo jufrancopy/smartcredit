@@ -32,8 +32,12 @@ export const checkRenewalEligibility = async (req: AuthRequest, res: Response) =
       const paidInstallments = loan.installments.filter(inst => inst.monto_pagado >= inst.monto_expected).length;
       const remainingInstallments = totalInstallments - paidInstallments;
       
-      // Elegible si queda 1 cuota o menos del 10% del préstamo
-      return remainingInstallments <= 1 || (paidInstallments / totalInstallments) >= 0.9;
+      // Calcular porcentaje pagado del total a devolver
+      const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
+      const paymentPercentage = totalPaid / loan.total_a_devolver;
+      
+      // Elegible si queda 1 cuota o más del 90% del total pagado
+      return remainingInstallments <= 1 || paymentPercentage >= 0.9;
     });
 
     if (eligibleLoans.length === 0) {

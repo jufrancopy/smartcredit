@@ -178,11 +178,28 @@ const AdminDashboard: React.FC = () => {
 
         {activeTab === 'summary' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
               <StatCard icon={<FaUsers />} title="Total de Clientes" value={totalClients} color="blue" />
               <StatCard icon={<FaMoneyBillWave />} title="Capital Prestado" value={`$${totalLoaned.toLocaleString()}`} color="green" />
               <StatCard icon={<FaChartLine />} title="Total Recaudado" value={`$${totalCollected.toLocaleString()}`} color="yellow" />
               <StatCard icon={<FaRegChartBar />} title="Balance Pendiente" value={`$${outstandingBalance.toLocaleString()}`} color="red" />
+              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center mb-4">
+                  <div className="bg-white/20 p-3 rounded-xl mr-3">
+                    <span className="text-xl">🔄</span>
+                  </div>
+                  <div>
+                    <p className="text-purple-100 text-sm font-medium uppercase tracking-wide">Elegibles Renovación</p>
+                    <p className="text-2xl font-bold">{clients.filter(client => {
+                      const clientLoans = loansData?.filter(loan => loan.userId === client.id && loan.estado === 'activo') || [];
+                      return clientLoans.some(loan => {
+                        const totalPaid = loan.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
+                        return totalPaid / loan.total_a_devolver >= 0.9;
+                      });
+                    }).length}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
@@ -250,22 +267,40 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentPayments.map((payment: any, index: number) => (
-                      <tr key={payment.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${index === recentPayments.length - 1 ? 'border-b-0' : ''}`}>
-                        <td className="p-4 font-medium text-gray-800">{payment.installment.loan.user.nombre}</td>
-                        <td className="p-4 font-bold text-emerald-600">${payment.monto.toLocaleString()}</td>
-                        <td className="p-4 text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
-                        <td className="p-4">
-                          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                            payment.confirmado 
-                              ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300' 
-                              : 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300'
-                          }`}>
-                            {payment.confirmado ? '✅ Confirmado' : '⏳ Pendiente'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {recentPayments.map((payment: any, index: number) => {
+                      const loan = payment.installment?.loan;
+                      const totalPaid = loan?.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
+                      const paymentProgress = loan ? (totalPaid / loan.total_a_devolver * 100).toFixed(1) : '0';
+                      
+                      return (
+                        <tr key={payment.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${index === recentPayments.length - 1 ? 'border-b-0' : ''}`}>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium text-gray-800">{payment.installment.loan.user.nombre}</p>
+                              <p className="text-xs text-gray-500">Progreso: {paymentProgress}%</p>
+                            </div>
+                          </td>
+                          <td className="p-4 font-bold text-emerald-600">${payment.monto.toLocaleString()}</td>
+                          <td className="p-4 text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
+                          <td className="p-4">
+                            <div className="flex flex-col gap-1">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                payment.confirmado 
+                                  ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300' 
+                                  : 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300'
+                              }`}>
+                                {payment.confirmado ? '✅ Confirmado' : '⏳ Pendiente'}
+                              </span>
+                              {parseFloat(paymentProgress) >= 90 && (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
+                                  🔄 Renovable
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
