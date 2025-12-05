@@ -36,10 +36,6 @@ export const checkRenewalEligibility = async (req: AuthRequest, res: Response) =
       const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
       const percentageOfPrincipal = totalPaid / loan.monto_principal;
       
-      // Calcular porcentaje pagado del capital principal
-      const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
-      const percentageOfPrincipal = totalPaid / loan.monto_principal;
-      
       // Elegible si ha pagado 90% del capital principal O queda 1 cuota
       const eligible = percentageOfPrincipal >= 0.9 || remainingInstallments <= 1;
       
