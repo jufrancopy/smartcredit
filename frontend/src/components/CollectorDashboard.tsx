@@ -669,17 +669,7 @@ const CollectorDashboard: React.FC = () => {
       });
       const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
       
-      console.log(`=== DEBUG COBRADOR ===`);
-      console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`);
-      console.log(`- Cuotas totales: ${loan.installments.length}`);
-      console.log(`- Cuotas individuales:`);
-      loan.installments.forEach((inst: any, index: number) => {
-        console.log(`  Cuota ${index + 1}: Esperado=${inst.monto_expected}, Pagado=${inst.monto_pagado}, Status=${inst.status}`);
-      });
-      console.log(`- TOTAL PAGADO: ${totalPagadoEstePrestamo}`);
-      console.log(`- Total a devolver: ${loan.total_a_devolver}`);
-      console.log(`- Deuda pendiente: ${deudaPendienteEstePrestamo}`);
-      console.log(`=====================`);
+// Debug removido - cálculos correctos
       
       debtor.amountDue += deudaPendienteEstePrestamo;
       debtor.totalPaid += totalPagadoEstePrestamo;

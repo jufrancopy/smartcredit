@@ -36,19 +36,13 @@ export const checkRenewalEligibility = async (req: AuthRequest, res: Response) =
       const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
       const percentageOfPrincipal = totalPaid / loan.monto_principal;
       
-      // FORZAR ELEGIBILIDAD PARA DEBUG
-      console.log(`=== DEBUG RENOVACIÓN ===`);
-      console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`);
-      console.log(`- Total pagado: ${totalPaid}`);
-      console.log(`- Capital principal: ${loan.monto_principal}`);
-      console.log(`- Porcentaje: ${(percentageOfPrincipal * 100).toFixed(1)}%`);
-      console.log(`- Cuotas restantes: ${remainingInstallments}`);
+      // Calcular porcentaje pagado del capital principal
+      const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
+      const percentageOfPrincipal = totalPaid / loan.monto_principal;
       
-      // TEMPORALMENTE: Si ha pagado más de 400k de 500k, es elegible
-      const eligible = totalPaid >= 400000;
+      // Elegible si ha pagado 90% del capital principal O queda 1 cuota
+      const eligible = percentageOfPrincipal >= 0.9 || remainingInstallments <= 1;
       
-      console.log(`- ELEGIBLE: ${eligible}`);
-      console.log(`========================`);
       return eligible;
     });
 
