@@ -137,7 +137,7 @@ export const sendPaymentReceivedEmail = async (clientData: {
   email: string;
   nombre: string;
   monto: number;
-  installmentId: number;
+  installmentNumber: number;
 }) => {
   const content = `
     <h2>📨 Hemos recibido tu pago</h2>
@@ -153,7 +153,7 @@ export const sendPaymentReceivedEmail = async (clientData: {
             </div>
             <div class="info-item">
                 <div class="info-label">Cuota #</div>
-                <div class="info-value">${clientData.installmentId}</div>
+                <div class="info-value">${clientData.installmentNumber}</div>
             </div>
         </div>
         <p><strong>📅 Fecha de Recepción:</strong> ${new Date().toLocaleDateString('es-PY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
@@ -179,7 +179,7 @@ export const sendPaymentConfirmedEmail = async (clientData: {
   email: string;
   nombre: string;
   monto: number;
-  installmentId: number;
+  installmentNumber: number;
 }) => {
   const content = `
     <h2>✅ ¡Tu pago ha sido confirmado!</h2>
@@ -195,7 +195,7 @@ export const sendPaymentConfirmedEmail = async (clientData: {
             </div>
             <div class="info-item">
                 <div class="info-label">Cuota #</div>
-                <div class="info-value">${clientData.installmentId}</div>
+                <div class="info-value">${clientData.installmentNumber}</div>
             </div>
         </div>
         <p><strong>📅 Fecha de Confirmación:</strong> ${new Date().toLocaleDateString('es-PY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>

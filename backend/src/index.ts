@@ -10,6 +10,7 @@ import pdfRoutes from './routes/pdf';
 import investmentRoutes from './routes/investments';
 import uploadRoutes from './routes/upload';
 import clientProductRoutes from './routes/clientProducts';
+import loanRenewalRoutes from './routes/loanRenewal';
 import path from 'path';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/pdf', pdfRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/client-products', clientProductRoutes);
+app.use('/api/loan-renewal', loanRenewalRoutes);
 
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000');

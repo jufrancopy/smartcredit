@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { FaFileInvoiceDollar, FaPlusCircle } from 'react-icons/fa';
 import Modal from './Modal';
 import CreateLoanForm from './CreateLoanForm';
+import { useCheckRenewalEligibility } from '../queries';
+import toast from 'react-hot-toast';
 
 interface Loan {
   id: number;
@@ -15,13 +17,48 @@ interface Loan {
 
 interface LoanListProps {
   loans: Loan[];
+  onOpenRenewal?: (clientData: any) => void;
 }
 
-const LoanList: React.FC<LoanListProps> = ({ loans }) => {
+const LoanList: React.FC<LoanListProps> = ({ loans, onOpenRenewal }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [checkingRenewal, setCheckingRenewal] = useState<number | null>(null);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
+
+  const handleCheckRenewal = async (loan: Loan) => {
+    if (!onOpenRenewal) return;
+    
+    setCheckingRenewal(loan.id);
+    try {
+      const response = await fetch(`/api/loan-renewal/check-eligibility/${loan.user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al verificar elegibilidad');
+      }
+      
+      const eligibilityData = await response.json();
+      
+      if (eligibilityData.eligible) {
+        onOpenRenewal({
+          id: loan.user.id,
+          name: eligibilityData.clientName,
+          eligibilityData
+        });
+      } else {
+        toast.error('Cliente no elegible para renovación. Debe tener al menos el 90% del préstamo pagado.');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al verificar elegibilidad');
+    } finally {
+      setCheckingRenewal(null);
+    }
+  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -42,6 +79,7 @@ const LoanList: React.FC<LoanListProps> = ({ loans }) => {
               <th className="p-3">Monto</th>
               <th className="p-3">Interés</th>
               <th className="p-3">Estado</th>
+              <th className="p-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +96,24 @@ const LoanList: React.FC<LoanListProps> = ({ loans }) => {
                   }`}>
                     {loan.estado}
                   </span>
+                </td>
+                <td className="p-3">
+                  {loan.estado === 'activo' && onOpenRenewal && (
+                    <button
+                      onClick={() => handleCheckRenewal(loan)}
+                      disabled={checkingRenewal === loan.id}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-lg text-sm hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 disabled:opacity-50"
+                    >
+                      {checkingRenewal === loan.id ? (
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                          Verificando...
+                        </div>
+                      ) : (
+                        '🔄 Renovar'
+                      )}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

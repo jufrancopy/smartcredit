@@ -661,6 +661,45 @@ export const useDeleteUser = (options?: UseMutationOptions<any, Error, number>) 
   });
 };
 
+// Verificar elegibilidad para renovación
+export const useCheckRenewalEligibility = (userId: number) => {
+  return useQuery({
+    queryKey: ['renewal-eligibility', userId],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/loan-renewal/check-eligibility/${userId}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        throw new Error('Error al verificar elegibilidad');
+      }
+      return res.json();
+    },
+    enabled: !!userId,
+  });
+};
+
+// Crear renovación de préstamo
+export const useCreateRenewalLoan = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`${API_URL}/loan-renewal/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al crear renovación');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
 // Download loan PDF
 export const downloadLoanPDF = async (loanId: number) => {
   try {

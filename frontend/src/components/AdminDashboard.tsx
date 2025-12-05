@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import ClientList from './ClientList';
 import CollectorList from './CollectorList';
 import LoanList from './LoanList';
+import LoanRenewal from './LoanRenewal';
 import Modal from './Modal';
 import CreateUserForm from './CreateUserForm';
 import ProductManager from './ProductManager';
@@ -45,6 +46,8 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, value, color }) => {
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('summary');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [showRenewalModal, setShowRenewalModal] = useState(false);
+  const [selectedClientForRenewal, setSelectedClientForRenewal] = useState<any>(null);
   const { data: usersData, isLoading: usersLoading, error: usersError } = useGetUsers();
   const { data: loansData, isLoading: loansLoading, error: loansError } = useGetLoans();
   const { data: paymentsData, isLoading: paymentsLoading, error: paymentsError } = useGetPayments();
@@ -302,7 +305,13 @@ const AdminDashboard: React.FC = () => {
               </div>
               <h2 className="text-2xl font-bold text-gray-800">Gestión de Préstamos</h2>
             </div>
-            <LoanList loans={loansData} />
+            <LoanList 
+              loans={loansData} 
+              onOpenRenewal={(clientData) => {
+                setSelectedClientForRenewal(clientData);
+                setShowRenewalModal(true);
+              }} 
+            />
           </div>
         )}
 
@@ -321,6 +330,23 @@ const AdminDashboard: React.FC = () => {
         <Modal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} title="Crear Nuevo Usuario">
           <CreateUserForm onSuccess={() => setIsUserModalOpen(false)} />
         </Modal>
+
+        {showRenewalModal && selectedClientForRenewal && (
+          <LoanRenewal
+            clientId={selectedClientForRenewal.id}
+            clientName={selectedClientForRenewal.name}
+            eligibilityData={selectedClientForRenewal.eligibilityData}
+            onClose={() => {
+              setShowRenewalModal(false);
+              setSelectedClientForRenewal(null);
+            }}
+            onSuccess={() => {
+              setShowRenewalModal(false);
+              setSelectedClientForRenewal(null);
+              refetch();
+            }}
+          />
+        )}
         
         <Toaster
           position="top-right"

@@ -190,11 +190,18 @@ router.post('/payments/confirm', authenticateToken, async (req: AuthRequest, res
       // Notify the client about payment confirmation
       const clientUser = await prisma.user.findUnique({ where: { id: installment.loan.userId }, select: { email: true, nombre: true } });
       if (clientUser && clientUser.email) {
+        // Calcular el número real de cuota
+        const allInstallments = await prisma.installment.findMany({
+          where: { loanId: installment.loanId },
+          orderBy: { fecha: 'asc' }
+        });
+        const installmentNumber = allInstallments.findIndex(inst => inst.id === installmentId) + 1;
+        
         await sendPaymentConfirmedEmail({
           email: clientUser.email,
           nombre: clientUser.nombre,
           monto,
-          installmentId
+          installmentNumber
         });
       }
     } catch (emailError) {
@@ -281,11 +288,18 @@ router.post('/payments/upload-and-confirm', authenticateToken, upload.single('co
       // Notify the client about payment confirmation
       const clientUser = await prisma.user.findUnique({ where: { id: installment.loan.userId }, select: { email: true, nombre: true } });
       if (clientUser && clientUser.email) {
+        // Calcular el número real de cuota
+        const allInstallments = await prisma.installment.findMany({
+          where: { loanId: installment.loanId },
+          orderBy: { fecha: 'asc' }
+        });
+        const installmentNumber = allInstallments.findIndex(inst => inst.id === installmentId) + 1;
+        
         await sendPaymentConfirmedEmail({
           email: clientUser.email,
           nombre: clientUser.nombre,
           monto: montoNum,
-          installmentId
+          installmentNumber
         });
       }
     } catch (emailError) {

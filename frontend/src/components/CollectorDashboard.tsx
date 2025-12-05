@@ -659,7 +659,11 @@ const CollectorDashboard: React.FC = () => {
       
       const debtor = debtorsMap.get(loan.user.id)!;
       debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario });
-      debtor.amountDue += loan.total_a_devolver - loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
+      
+      // Calcular deuda pendiente para este préstamo específico
+      const totalPagadoEstePresta mo = loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
+      const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
+      debtor.amountDue += deudaPendienteEstePrestamo;
       
       const processedInstallments: InstallmentForCollector[] = loan.installments
         .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
