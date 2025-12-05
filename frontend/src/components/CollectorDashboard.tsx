@@ -662,16 +662,27 @@ const CollectorDashboard: React.FC = () => {
       const debtor = debtorsMap.get(loan.user.id)!;
       debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario });
       
-      // Calcular deuda pendiente para este préstamo específico
-      const totalPagadoEstePrestamo = loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
+      // RECALCULAR desde cero para evitar errores
+      let totalPagadoEstePrestamo = 0;
+      loan.installments.forEach((inst: any) => {
+        totalPagadoEstePrestamo += Number(inst.monto_pagado) || 0;
+      });
       const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
       
-      console.log(`Debug Cobrador - Préstamo ${loan.id}:`, {
-        totalPagado: totalPagadoEstePrestamo,
-        totalADevolver: loan.total_a_devolver,
-        deudaPendiente: deudaPendienteEstePrestamo,
-        installments: loan.installments.length
-      });
+      console.log(`=== DEBUG COBRADOR ===`);
+      console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`);
+      console.log(`- Cuotas totales: ${loan.installments.length}`);
+      console.log(`- Cuotas individuales:`, loan.installments.map(inst => ({
+        id: inst.id,
+        fecha: inst.fecha,
+        esperado: inst.monto_expected,
+        pagado: inst.monto_pagado,
+        status: inst.status
+      })));
+      console.log(`- TOTAL PAGADO: ${totalPagadoEstePrestamo}`);
+      console.log(`- Total a devolver: ${loan.total_a_devolver}`);
+      console.log(`- Deuda pendiente: ${deudaPendienteEstePrestamo}`);
+      console.log(`=====================`);
       
       debtor.amountDue += deudaPendienteEstePrestamo;
       debtor.totalPaid += totalPagadoEstePrestamo;
