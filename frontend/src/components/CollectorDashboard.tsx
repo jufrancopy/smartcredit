@@ -672,13 +672,10 @@ const CollectorDashboard: React.FC = () => {
       console.log(`=== DEBUG COBRADOR ===`);
       console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`);
       console.log(`- Cuotas totales: ${loan.installments.length}`);
-      console.log(`- Cuotas individuales:`, loan.installments.map(inst => ({
-        id: inst.id,
-        fecha: inst.fecha,
-        esperado: inst.monto_expected,
-        pagado: inst.monto_pagado,
-        status: inst.status
-      })));
+      console.log(`- Cuotas individuales:`);
+      loan.installments.forEach((inst: any, index: number) => {
+        console.log(`  Cuota ${index + 1}: Esperado=${inst.monto_expected}, Pagado=${inst.monto_pagado}, Status=${inst.status}`);
+      });
       console.log(`- TOTAL PAGADO: ${totalPagadoEstePrestamo}`);
       console.log(`- Total a devolver: ${loan.total_a_devolver}`);
       console.log(`- Deuda pendiente: ${deudaPendienteEstePrestamo}`);
