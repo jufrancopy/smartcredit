@@ -178,131 +178,192 @@ const AdminDashboard: React.FC = () => {
 
         {activeTab === 'summary' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
               <StatCard icon={<FaUsers />} title="Total de Clientes" value={totalClients} color="blue" />
               <StatCard icon={<FaMoneyBillWave />} title="Capital Prestado" value={`$${totalLoaned.toLocaleString()}`} color="green" />
               <StatCard icon={<FaChartLine />} title="Total Recaudado" value={`$${totalCollected.toLocaleString()}`} color="yellow" />
               <StatCard icon={<FaRegChartBar />} title="Balance Pendiente" value={`$${outstandingBalance.toLocaleString()}`} color="red" />
-              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center mb-4">
-                  <div className="bg-white/20 p-3 rounded-xl mr-3">
-                    <span className="text-xl">🔄</span>
-                  </div>
-                  <div>
-                    <p className="text-purple-100 text-sm font-medium uppercase tracking-wide">Elegibles Renovación</p>
-                    <p className="text-2xl font-bold">{clients.filter(client => {
-                      const clientLoans = loansData?.filter(loan => loan.userId === client.id && loan.estado === 'activo') || [];
-                      return clientLoans.some(loan => {
-                        const totalPaid = loan.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
-                        return totalPaid / loan.total_a_devolver >= 0.9;
-                      });
-                    }).length}</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-              <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-                <div className="flex items-center mb-6">
-                  <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-xl mr-4">
-                    <FaChartLine className="text-white text-xl" />
+            {/* Resumen Ejecutivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+              {/* Flujo de Efectivo */}
+              <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-3 rounded-2xl mr-4">
+                      <span className="text-white text-2xl">💰</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800">Flujo de Efectivo</h3>
+                      <p className="text-gray-600">Análisis financiero en tiempo real</p>
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800">Préstamos por Mes</h2>
                 </div>
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={monthlyChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" stroke="#666" />
-                    <YAxis stroke="#666" />
-                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
-                    <Legend />
-                    <Bar dataKey="prestamos" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                    <defs>
-                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0.7}/>
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Efectivo Prestado</span>
+                    </div>
+                    <span className="font-bold text-emerald-600 text-lg">${totalLoaned.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Total Recaudado</span>
+                    </div>
+                    <span className="font-bold text-blue-600 text-lg">${totalCollected.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-amber-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Por Cobrar</span>
+                    </div>
+                    <span className="font-bold text-amber-600 text-lg">${outstandingBalance.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-gray-800">Rentabilidad</span>
+                      <span className="font-bold text-2xl text-purple-600">
+                        {totalLoaned > 0 ? ((totalCollected / totalLoaned * 100) - 100).toFixed(1) : '0'}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-                <div className="flex items-center mb-6">
-                  <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-3 rounded-xl mr-4">
-                    <FaRegChartBar className="text-white text-xl" />
+              {/* Estado de Cartera */}
+              <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-3 rounded-2xl mr-4">
+                      <span className="text-white text-2xl">📈</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800">Estado de Cartera</h3>
+                      <p className="text-gray-600">Distribución de préstamos</p>
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800">Estado de Préstamos</h2>
                 </div>
-                <ResponsiveContainer width="100%" height={320}>
-                  <PieChart>
-                    <Pie data={loanStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} fill="#8884d8" label>
-                      {loanStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Préstamos Activos</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-green-600 text-lg">{activeLoans}</span>
+                      <p className="text-sm text-gray-500">{totalClients > 0 ? ((activeLoans / (activeLoans + completedLoans)) * 100).toFixed(0) : 0}%</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Préstamos Completados</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-blue-600 text-lg">{completedLoans}</span>
+                      <p className="text-sm text-gray-500">{totalClients > 0 ? ((completedLoans / (activeLoans + completedLoans)) * 100).toFixed(0) : 0}%</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-gray-500 rounded-full mr-3"></div>
+                      <span className="font-medium text-gray-700">Total Clientes</span>
+                    </div>
+                    <span className="font-bold text-gray-600 text-lg">{totalClients}</span>
+                  </div>
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-gray-800">Promedio por Cliente</span>
+                      <span className="font-bold text-lg text-indigo-600">
+                        ${totalClients > 0 ? (totalLoaned / totalClients).toLocaleString() : '0'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-              <div className="flex items-center mb-6">
-                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-3 rounded-xl mr-4">
-                  <FaFileInvoiceDollar className="text-white text-xl" />
+            {/* Actividad Reciente */}
+            <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-2xl mr-4">
+                    <span className="text-white text-2xl">💳</span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800">Actividad Reciente</h3>
+                    <p className="text-gray-600">Transacciones y movimientos del día</p>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Pagos Recientes</h2>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Hoy</p>
+                  <p className="text-lg font-bold text-gray-800">{new Date().toLocaleDateString('es-ES')}</p>
+                </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
-                      <th className="p-4 font-semibold text-gray-700 rounded-tl-xl">Cliente</th>
-                      <th className="p-4 font-semibold text-gray-700">Monto</th>
-                      <th className="p-4 font-semibold text-gray-700">Fecha</th>
-                      <th className="p-4 font-semibold text-gray-700 rounded-tr-xl">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentPayments.map((payment: any, index: number) => {
-                      const loan = payment.installment?.loan;
-                      const totalPaid = loan?.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
-                      const paymentProgress = loan ? (totalPaid / loan.total_a_devolver * 100).toFixed(1) : '0';
-                      
-                      return (
-                        <tr key={payment.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${index === recentPayments.length - 1 ? 'border-b-0' : ''}`}>
-                          <td className="p-4">
-                            <div>
-                              <p className="font-medium text-gray-800">{payment.installment.loan.user.nombre}</p>
-                              <p className="text-xs text-gray-500">Progreso: {paymentProgress}%</p>
-                            </div>
-                          </td>
-                          <td className="p-4 font-bold text-emerald-600">${payment.monto.toLocaleString()}</td>
-                          <td className="p-4 text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
-                          <td className="p-4">
-                            <div className="flex flex-col gap-1">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                payment.confirmado 
-                                  ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300' 
-                                  : 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300'
-                              }`}>
-                                {payment.confirmado ? '✅ Confirmado' : '⏳ Pendiente'}
+              
+              <div className="space-y-4">
+                {recentPayments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl text-gray-400">💳</span>
+                    </div>
+                    <p className="text-gray-500 text-lg">No hay pagos recientes</p>
+                  </div>
+                ) : (
+                  recentPayments.map((payment: any, index: number) => {
+                    const loan = payment.installment?.loan;
+                    const totalPaid = loan?.installments?.reduce((sum, inst) => sum + inst.monto_pagado, 0) || 0;
+                    const paymentProgress = loan ? (totalPaid / loan.monto_principal * 100).toFixed(0) : '0';
+                    
+                    return (
+                      <div key={payment.id} className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-white rounded-2xl border border-gray-100 hover:shadow-md transition-all duration-300">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">
+                              {payment.installment.loan.user.nombre.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-800 text-lg">{payment.installment.loan.user.nombre}</h4>
+                            <div className="flex items-center space-x-3 mt-1">
+                              <span className="text-sm text-gray-500">
+                                {new Date(payment.createdAt).toLocaleDateString('es-ES')}
                               </span>
-                              {parseFloat(paymentProgress) >= 90 && (
-                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
-                                  🔄 Renovable
-                                </span>
-                              )}
+                              <div className="flex items-center">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                                <span className="text-sm font-medium text-blue-600">{paymentProgress}% completado</span>
+                              </div>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="font-bold text-2xl text-gray-800">${payment.monto.toLocaleString()}</p>
+                            <p className="text-sm text-gray-500">Guaraníes</p>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            {payment.confirmado ? (
+                              <div className="flex items-center bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
+                                <span className="text-sm font-semibold">Confirmado</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center bg-amber-100 text-amber-700 px-3 py-2 rounded-xl">
+                                <div className="w-2 h-2 bg-amber-500 rounded-full mr-2 animate-pulse"></div>
+                                <span className="text-sm font-semibold">Pendiente</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </>

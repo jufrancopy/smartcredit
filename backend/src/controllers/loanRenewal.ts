@@ -32,24 +32,29 @@ export const checkRenewalEligibility = async (req: AuthRequest, res: Response) =
       const paidInstallments = loan.installments.filter(inst => inst.monto_pagado >= inst.monto_expected).length;
       const remainingInstallments = totalInstallments - paidInstallments;
       
-      // Calcular porcentaje pagado del total a devolver
+      // Calcular porcentaje pagado del capital principal
       const totalPaid = loan.installments.reduce((sum, inst) => sum + inst.monto_pagado, 0);
-      const paymentPercentage = totalPaid / loan.total_a_devolver;
+      const percentageOfPrincipal = totalPaid / loan.monto_principal;
       
       console.log(`Préstamo ${loan.id} - Cliente ${loan.user.nombre}:`, {
         totalPaid,
-        totalADevolver: loan.total_a_devolver,
-        percentage: (paymentPercentage * 100).toFixed(1) + '%',
-        remainingInstallments,
-        eligible: remainingInstallments <= 1 || paymentPercentage >= 0.9
+        montoPrincipal: loan.monto_principal,
+        percentageOfPrincipal: (percentageOfPrincipal * 100).toFixed(1) + '%',
+        remainingInstallments
       });
       
-      // Elegible si queda 1 cuota o más del 90% del total pagado
-      return remainingInstallments <= 1 || paymentPercentage >= 0.9;
+      // Elegible si ha pagado 90% del capital principal O queda 1 cuota
+      const eligible = percentageOfPrincipal >= 0.9 || remainingInstallments <= 1;
+      
+      console.log(`Elegible: ${eligible}`);
+      return eligible;
     });
 
     if (eligibleLoans.length === 0) {
-      return res.json({ eligible: false, message: 'Cliente no elegible para renovación' });
+      return res.json({ 
+        eligible: false, 
+        message: 'Cliente no elegible. Necesita: 90% del capital principal pagado O 1 cuota restante' 
+      });
     }
 
     // Calcular deuda pendiente total

@@ -665,6 +665,14 @@ const CollectorDashboard: React.FC = () => {
       // Calcular deuda pendiente para este préstamo específico
       const totalPagadoEstePrestamo = loan.installments.reduce((sum: number, inst: any) => sum + inst.monto_pagado, 0);
       const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
+      
+      console.log(`Debug Cobrador - Préstamo ${loan.id}:`, {
+        totalPagado: totalPagadoEstePrestamo,
+        totalADevolver: loan.total_a_devolver,
+        deudaPendiente: deudaPendienteEstePrestamo,
+        installments: loan.installments.length
+      });
+      
       debtor.amountDue += deudaPendienteEstePrestamo;
       debtor.totalPaid += totalPagadoEstePrestamo;
       
