@@ -28,7 +28,7 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     nuevoMontoPrincipal: eligibilityData.totalPendingDebt + 100000, // Deuda + 100k mínimo
-    interesTotalPercent: 20,
+    montoDiario: 30000,
     plazoDias: 30,
     fechaInicioCobro: new Date().toISOString().split('T')[0]
   });
@@ -76,14 +76,18 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
 
     createRenewalMutation.mutate({
       userId: clientId,
-      ...formData,
+      nuevoMontoPrincipal: formData.nuevoMontoPrincipal,
+      interesTotalPercent: interesTotalPercent,
+      plazoDias: formData.plazoDias,
+      fechaInicioCobro: formData.fechaInicioCobro,
       loanIdsToClose: eligibilityData.eligibleLoans.map(loan => loan.id)
     });
   };
 
   const montoEfectivo = formData.nuevoMontoPrincipal - eligibilityData.totalPendingDebt;
-  const totalADevolver = formData.nuevoMontoPrincipal * (1 + formData.interesTotalPercent / 100);
-  const montoDiario = totalADevolver / formData.plazoDias;
+  const totalADevolver = formData.montoDiario * formData.plazoDias;
+  const interesTotalPercent = totalADevolver > formData.nuevoMontoPrincipal && formData.nuevoMontoPrincipal > 0 ? 
+    ((totalADevolver - formData.nuevoMontoPrincipal) / formData.nuevoMontoPrincipal * 100) : 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -144,15 +148,14 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Interés Total (%)
+                Monto Diario (Gs)
               </label>
               <input
                 type="number"
-                value={formData.interesTotalPercent}
-                onChange={(e) => setFormData({...formData, interesTotalPercent: parseFloat(e.target.value)})}
-                min="1"
-                max="100"
-                step="0.1"
+                value={formData.montoDiario}
+                onChange={(e) => setFormData({...formData, montoDiario: parseInt(e.target.value)})}
+                min="1000"
+                step="1000"
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
@@ -205,7 +208,7 @@ const LoanRenewal: React.FC<LoanRenewalProps> = ({
               </div>
               <div className="bg-white rounded-xl p-4">
                 <p className="text-sm text-slate-600">Interés Total</p>
-                <p className="text-xl font-bold text-purple-600">{interesTotalPercent.toFixed(1)}%</p>
+                <p className="text-xl font-bold text-purple-600">{(interesTotalPercent || 0).toFixed(1)}%</p>
               </div>
               <div className="bg-white rounded-xl p-4">
                 <p className="text-sm text-slate-600">Deuda que se Paga</p>
