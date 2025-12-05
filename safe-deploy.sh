@@ -3,7 +3,7 @@
 echo "🔍 Verificando estado de la base de datos..."
 
 # Ejecutar verificación de BD
-psql -h localhost -U postgres -d ahorraconmigo -f check-db.sql > db-status.txt
+psql -h localhost -U postgres -d smartcredit -f check-db.sql > db-status.txt
 
 echo "📋 Estado de BD guardado en db-status.txt"
 echo "📖 Revisa el archivo para ver qué existe actualmente"

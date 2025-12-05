@@ -5,7 +5,7 @@ echo "🚀 Iniciando despliegue seguro..."
 
 # 1. Backup de la base de datos
 echo "📦 Creando backup de la base de datos..."
-pg_dump -h localhost -U postgres -d ahorraconmigo > backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -h localhost -U postgres -d smartcredit > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. Instalar dependencias del backend
 echo "📚 Instalando dependencias del backend..."

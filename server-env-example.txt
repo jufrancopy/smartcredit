@@ -1,0 +1,13 @@
+# Actualiza tu .env en el servidor con:
+DATABASE_URL="postgresql://postgres:TU_PASSWORD@localhost:5432/smartcredit"
+JWT_SECRET="supersecretjwtkey"
+ADMIN_USER="admin"
+ADMIN_PASSWORD="admin123"
+
+# Email Configuration
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT="587"
+EMAIL_SECURE="false"
+EMAIL_USER="tu-email@gmail.com"
+EMAIL_PASS="tu-app-password"
+EMAIL_FROM="SmartCredit <noreply@smartcredit.com>"
