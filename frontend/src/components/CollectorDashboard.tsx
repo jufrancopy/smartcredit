@@ -460,13 +460,15 @@ interface PaymentToConfirm {
 }
 
 interface Debtor {
-  id: number;
+  id: number | string;
   name: string;
   amountDue: number;
   totalPaid: number;
   installments: Installment[];
   foto_url?: string;
   loans: { id: number; monto_principal: number; monto_diario: number }[];
+  loanId?: number;
+  createdAt?: string;
 }
 
 interface InstallmentForCollector extends Installment {
@@ -628,8 +630,7 @@ const CollectorDashboard: React.FC = () => {
       }
       
       // Buscar el loan que contiene estos installments
-      const allLoans = [...prestamosNuevos, ...prestamosExistentes];
-      const loanWithInstallments = allLoans?.find((loan: any) => 
+      const loanWithInstallments = loans?.find((loan: any) => 
         loan.installments.some((inst: any) => 
           installments.some(targetInst => targetInst.id === inst.id)
         )
@@ -654,35 +655,15 @@ const CollectorDashboard: React.FC = () => {
   const debtors: Debtor[] = useMemo(() => {
     if (!loans) return [];
     
-    const debtorsMap = new Map<number, Debtor>();
+    // Crear un debtor por cada préstamo activo (no agrupar por usuario)
+    const debtorsList: Debtor[] = [];
     
     loans.forEach((loan: any) => {
-      if (!debtorsMap.has(loan.user.id)) {
-        debtorsMap.set(loan.user.id, {
-          id: loan.user.id,
-          name: `${loan.user.nombre} ${loan.user.apellido}`,
-          amountDue: 0,
-          totalPaid: 0,
-          installments: [],
-          foto_url: loan.user.foto_url,
-          loans: [],
-        });
-      }
-      
-      const debtor = debtorsMap.get(loan.user.id)!;
-      debtor.loans.push({ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario });
-      
-      // RECALCULAR desde cero para evitar errores
       let totalPagadoEstePrestamo = 0;
       loan.installments.forEach((inst: any) => {
         totalPagadoEstePrestamo += Number(inst.monto_pagado) || 0;
       });
       const deudaPendienteEstePrestamo = loan.total_a_devolver - totalPagadoEstePrestamo;
-      
-// Debug removido - cálculos correctos
-      
-      debtor.amountDue += deudaPendienteEstePrestamo;
-      debtor.totalPaid += totalPagadoEstePrestamo;
       
       const processedInstallments: InstallmentForCollector[] = loan.installments
         .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
@@ -709,15 +690,26 @@ const CollectorDashboard: React.FC = () => {
           hasUnconfirmedPayment, 
           debtorId: loan.user.id, 
           debtorName: `${loan.user.nombre} ${loan.user.apellido}`,
-          installmentNumber: index + 1, // Asignar número de cuota basado en el índice
-          payments: inst.payments // Añadido para acceder a los pagos
+          installmentNumber: index + 1,
+          payments: inst.payments
         };
       });
       
-      debtor.installments.push(...processedInstallments);
+      // Crear un debtor separado para cada préstamo
+      debtorsList.push({
+        id: `${loan.user.id}-${loan.id}`,
+        name: `${loan.user.nombre} ${loan.user.apellido}`,
+        amountDue: deudaPendienteEstePrestamo,
+        totalPaid: totalPagadoEstePrestamo,
+        installments: processedInstallments,
+        foto_url: loan.user.foto_url,
+        loans: [{ id: loan.id, monto_principal: loan.monto_principal, monto_diario: loan.monto_diario }],
+        loanId: loan.id,
+        createdAt: loan.createdAt
+      });
     });
     
-    return Array.from(debtorsMap.values());
+    return debtorsList;
   }, [loans]);
 
   if (isLoading) {
