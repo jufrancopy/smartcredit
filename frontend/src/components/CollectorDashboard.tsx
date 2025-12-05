@@ -985,9 +985,9 @@ const CollectorDashboard: React.FC = () => {
                   Total Clientes
                 </p>
                 <p className="text-4xl font-bold text-slate-800 mb-1">
-                  {debtors.length}
+                  {new Set(debtors.map(d => d.name)).size}
                 </p>
-                <p className="text-slate-500 text-sm">Activos</p>
+                <p className="text-slate-500 text-sm">Únicos</p>
               </div>
             </div>
 
