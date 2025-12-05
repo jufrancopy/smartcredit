@@ -67,7 +67,7 @@ router.post('/payments/upload', authenticateToken, upload.single('comprobante'),
           email: clientUser.email,
           nombre: clientUser.nombre,
           monto: parseFloat(monto),
-          installmentId
+          installmentNumber: installmentId
         });
       }
 
