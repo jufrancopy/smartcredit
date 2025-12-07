@@ -378,11 +378,12 @@ export const getClientProducts = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
-    // Obtener inversiones activas del cliente con productos SmartCredit
+    // Obtener inversiones activas del cliente con productos SmartCredit (solo las pagadas/aprobadas)
     const investments = await prisma.investment.findMany({
       where: { 
         userId: client.id,
-        estado: { in: ['activo', 'vendido_parcial'] }
+        estado: { in: ['activo', 'vendido_parcial'] },
+        pagado: true // Solo mostrar productos aprobados/pagados
       },
       include: {
         product: true,
