@@ -156,7 +156,7 @@ const ProductManager: React.FC = () => {
             {product.imagen_url && (
               <div className="h-48 bg-gray-200 overflow-hidden">
                 <img 
-                  src={`http://localhost:3000${product.imagen_url}`} 
+                  src={`${import.meta.env.VITE_API_BASE_URL}${product.imagen_url}`} 
                   alt={product.nombre}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -313,7 +313,7 @@ const ProductManager: React.FC = () => {
                 {(imagePreview || editingProduct?.imagen_url) && (
                   <div className="mt-2">
                     <img 
-                      src={imagePreview || (editingProduct?.imagen_url ? `http://localhost:3000${editingProduct.imagen_url}` : '')} 
+                      src={imagePreview || (editingProduct?.imagen_url ? `${import.meta.env.VITE_API_BASE_URL}${editingProduct.imagen_url}` : '')} 
                       alt="Preview" 
                       className="w-32 h-32 object-cover rounded-lg border"
                     />
