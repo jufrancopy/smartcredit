@@ -62,7 +62,7 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
 // Comprar producto (crear inversión)
 export const buyProduct = async (req: AuthRequest, res: Response) => {
   try {
-    const { productId, cantidad, tipo_pago } = req.body;
+    const { productId, cantidad, tipo_pago, precio_reventa_cliente } = req.body;
     const userId = req.userId!;
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -84,7 +84,9 @@ export const buyProduct = async (req: AuthRequest, res: Response) => {
       const newInvestment = await tx.investment.create({
         data: {
           userId, productId, cantidad_comprada: cantidad,
-          precio_unitario: product.precio_compra, monto_total: montoTotal,
+          precio_unitario: product.precio_compra, 
+          precio_reventa_cliente: precio_reventa_cliente || product.precio_venta_sugerido,
+          monto_total: montoTotal,
           tipo_pago: esConsignacion ? 'microcredito' : 'inmediato',
           fecha_limite_pago: fechaLimite,
           pagado: !esConsignacion // Pago directo = true, consignación = false
@@ -396,7 +398,7 @@ export const getClientProducts = async (req: Request, res: Response) => {
       return {
         ...investment.product,
         cantidad_disponible: cantidadDisponible,
-        precio_cliente: investment.product.precio_venta_sugerido,
+        precio_cliente: investment.precio_reventa_cliente || investment.product.precio_venta_sugerido,
         investment_id: investment.id,
         tipo: 'smartcredit'
       };

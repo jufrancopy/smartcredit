@@ -12,6 +12,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const { data: products, isLoading, error } = useGetProducts();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [cantidad, setCantidad] = useState(1);
+  const [precioReventa, setPrecioReventa] = useState(0);
   const queryClient = useQueryClient();
 
   const buyProduct = useBuyProduct({
@@ -19,6 +20,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
       toast.success('¡Producto comprado exitosamente!');
       setSelectedProduct(null);
       setCantidad(1);
+      setPrecioReventa(0);
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
     onError: (error: any) => {
@@ -29,6 +31,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const handleBuyClick = (product: any) => {
     setSelectedProduct(product);
     setCantidad(1);
+    setPrecioReventa(product.precio_venta_sugerido);
   };
 
 
@@ -77,7 +80,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               {product.imagen_url && (
                 <div className="h-48 bg-gray-200 overflow-hidden">
                   <img 
-                    src={`http://localhost:3000${product.imagen_url}`} 
+                    src={`${import.meta.env.VITE_API_BASE_URL}${product.imagen_url}`} 
                     alt={product.nombre}
                     className="w-full h-full object-cover"
                   />
@@ -168,6 +171,25 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </p>
               </div>
               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mi precio de reventa (por {selectedProduct.unidad})
+                </label>
+                <input
+                  type="text"
+                  value={precioReventa.toLocaleString('es-PY')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setPrecioReventa(value ? parseInt(value) : selectedProduct.precio_venta_sugerido);
+                  }}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Precio de venta"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Sugerido: {selectedProduct.precio_venta_sugerido.toLocaleString('es-PY')} Gs
+                </p>
+              </div>
+              
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex justify-between mb-2">
                   <span>Precio unitario:</span>
@@ -183,7 +205,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
                 <div className="flex justify-between text-sm text-green-600 mt-1">
                   <span>Ganancia potencial:</span>
-                  <span>+{((selectedProduct.precio_venta_sugerido - selectedProduct.precio_compra) * cantidad).toLocaleString('es-PY')} Gs</span>
+                  <span>+{((precioReventa - selectedProduct.precio_compra) * cantidad).toLocaleString('es-PY')} Gs</span>
                 </div>
               </div>
               
@@ -194,7 +216,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                       buyProduct.mutate({
                         productId: selectedProduct.id,
                         cantidad: cantidad,
-                        tipo_pago: 'inmediato'
+                        tipo_pago: 'inmediato',
+                        precio_reventa_cliente: precioReventa
                       });
                     }}
                     disabled={buyProduct.isLoading}
@@ -209,7 +232,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     buyProduct.mutate({
                       productId: selectedProduct.id,
                       cantidad: cantidad,
-                      tipo_pago: 'microcredito'
+                      tipo_pago: 'microcredito',
+                      precio_reventa_cliente: precioReventa
                     });
                   }}
                   disabled={buyProduct.isLoading}

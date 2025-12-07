@@ -135,6 +135,7 @@ model Investment {
   productId         Int
   cantidad_comprada Float        // Soporta decimales para kg, litros, etc.
   precio_unitario   Float        // Precio al momento de la compra
+  precio_reventa_cliente Float?   // Precio personalizado del cliente para reventa
   monto_total       Float        // cantidad * precio_unitario
   fecha_compra      DateTime     @default(now())
   estado            InvestmentStatus @default(activo)
