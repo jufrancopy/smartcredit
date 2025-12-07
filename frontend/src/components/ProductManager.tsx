@@ -363,6 +363,7 @@ const ProductManager: React.FC = () => {
                 <option value="">Seleccionar unidad</option>
                 <option value="unidad">Unidad (productos individuales)</option>
                 <option value="paquete">Paquete (cajas, bolsas)</option>
+                <option value="plancha">Plancha (huevos)</option>
                 <option value="kilo">Kilo (peso)</option>
                 <option value="litro">Litro (líquidos)</option>
                 <option value="metro">Metro (telas, cables)</option>

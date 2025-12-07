@@ -135,13 +135,16 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
       const gananciasGeneradas = investment.salesReports.reduce((sum, sale) => sum + sale.ganancia_generada, 0);
       const cantidadRestante = investment.cantidad_comprada - totalVendido;
+      const saldoPendiente = investment.monto_total - investment.monto_pagado;
 
       return {
         ...investment,
         cantidad_vendida: totalVendido,
         cantidad_restante: cantidadRestante,
         ganancias_generadas: gananciasGeneradas,
-        ganancia_potencial_restante: cantidadRestante * (investment.product.precio_venta_sugerido - investment.precio_unitario)
+        ganancia_potencial_restante: cantidadRestante * (investment.product.precio_venta_sugerido - investment.precio_unitario),
+        saldo_pendiente: saldoPendiente,
+        porcentaje_pagado: (investment.monto_pagado / investment.monto_total) * 100
       };
     });
 
@@ -527,36 +530,52 @@ export const configureStore = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Pagar microcrédito
+// Pagar microcrédito (parcial o total)
 export const payMicrocredit = async (req: AuthRequest, res: Response) => {
   try {
-    const { investmentId } = req.body;
+    const { investmentId, monto } = req.body;
     const userId = req.userId!;
 
     const investment = await prisma.investment.findFirst({
-      where: { id: investmentId, userId, tipo_pago: 'microcredito', pagado: false }
+      where: { id: investmentId, userId, tipo_pago: 'microcredito' }
     });
 
     if (!investment) return res.status(404).json({ error: 'Microcrédito no encontrado' });
 
+    const saldoPendiente = investment.monto_total - investment.monto_pagado;
+    const montoPagar = monto || saldoPendiente;
+
+    if (montoPagar > saldoPendiente) {
+      return res.status(400).json({ error: 'Monto excede la deuda pendiente' });
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.fondo_acumulado < investment.monto_total) {
+    if (!user || user.fondo_acumulado < montoPagar) {
       return res.status(400).json({ error: 'Fondos insuficientes' });
     }
+
+    const nuevoMontoPagado = investment.monto_pagado + montoPagar;
+    const esPagoCompleto = nuevoMontoPagado >= investment.monto_total;
 
     await prisma.$transaction(async (tx) => {
       await tx.investment.update({
         where: { id: investmentId },
-        data: { pagado: true }
+        data: { 
+          monto_pagado: nuevoMontoPagado,
+          pagado: esPagoCompleto
+        }
       });
 
       await tx.user.update({
         where: { id: userId },
-        data: { fondo_acumulado: { decrement: investment.monto_total } }
+        data: { fondo_acumulado: { decrement: montoPagar } }
       });
     });
 
-    res.json({ message: 'Microcrédito pagado exitosamente' });
+    res.json({ 
+      message: esPagoCompleto ? 'Microcrédito pagado completamente' : 'Pago parcial registrado',
+      saldo_restante: investment.monto_total - nuevoMontoPagado
+    });
   } catch (error) {
     console.error('Error paying microcredit:', error);
     res.status(500).json({ error: 'Error al pagar microcrédito' });
@@ -583,6 +602,34 @@ export const getPendingConsignments = async (req: AuthRequest, res: Response) =>
   } catch (error) {
     console.error('Error fetching pending consignments:', error);
     res.status(500).json({ error: 'Error al obtener consignaciones pendientes' });
+  }
+};
+
+// ADMIN/COBRADOR: Obtener consignaciones aprobadas
+export const getApprovedConsignments = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const approvedInvestments = await prisma.investment.findMany({
+      where: { 
+        pagado: true,
+        tipo_pago: 'microcredito',
+        estado: { in: ['activo', 'vendido_parcial'] }
+      },
+      include: {
+        user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
+        product: true,
+        salesReports: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(approvedInvestments);
+  } catch (error) {
+    console.error('Error fetching approved consignments:', error);
+    res.status(500).json({ error: 'Error al obtener consignaciones aprobadas' });
   }
 };
 

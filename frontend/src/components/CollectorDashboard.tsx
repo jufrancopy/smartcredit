@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import UploadReceipt from './UploadReceipt';
 import StoreMonitor from './StoreMonitor';
 import ConsignmentManager from './ConsignmentManager';
+import ConsignmentTracking from './ConsignmentTracking';
 import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF } from '../queries';
 import '../styles/animations.css';
 
@@ -1100,8 +1101,20 @@ const CollectorDashboard: React.FC = () => {
           )}
 
           {activeTab === 'consignments' && (
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-              <ConsignmentManager />
+            <div className="space-y-8">
+              {/* Consignaciones Pendientes */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                <ConsignmentManager />
+              </div>
+              
+              {/* Productos en Seguimiento */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">📊 Productos en Seguimiento</h2>
+                  <p className="text-gray-600">Productos consignados aprobados y activos en tiendas</p>
+                </div>
+                <ConsignmentTracking />
+              </div>
             </div>
           )}
         </div>

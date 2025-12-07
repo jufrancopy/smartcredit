@@ -104,17 +104,38 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
                       </span>
                     </div>
+                    {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
+                      <div className="flex justify-between">
+                        <span>Saldo pendiente:</span>
+                        <span className="font-semibold text-red-600">
+                          {investment.saldo_pendiente.toLocaleString('es-PY')} Gs
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
-                  <button
-                    onClick={() => {
-                      setEditingInvestment(investment);
-                      setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
-                    }}
-                    className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                  >
-                    ✏️ Editar Precio
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setEditingInvestment(investment);
+                        setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
+                      }}
+                      className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                      ✏️ Editar Precio
+                    </button>
+                    {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
+                      <button
+                        onClick={() => {
+                          // TODO: Abrir modal de pago parcial
+                          console.log('Pagar consignación:', investment.id);
+                        }}
+                        className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                      >
+                        💰 Pagar Consignación
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -323,6 +323,20 @@ export const useGetPendingConsignments = () => {
   });
 };
 
+// Get approved consignments
+export const useGetApprovedConsignments = () => {
+  return useQuery({
+    queryKey: ['approved-consignments'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/approved-consignments`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 // Approve consignment
 export const useApproveConsignment = (options?: UseMutationOptions<any, Error, any>) => {
   return useMutation({

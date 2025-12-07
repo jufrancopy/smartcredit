@@ -15,6 +15,7 @@ import {
   configureStore,
   payMicrocredit,
   getPendingConsignments,
+  getApprovedConsignments,
   approveConsignment,
   rejectConsignment,
   updateInvestmentPrice
@@ -48,6 +49,7 @@ router.put('/update-price', authenticateToken, updateInvestmentPrice);
 
 // Rutas para admin - consignaciones
 router.get('/pending-consignments', authenticateToken, getPendingConsignments);
+router.get('/approved-consignments', authenticateToken, getApprovedConsignments);
 router.post('/approve-consignment', authenticateToken, approveConsignment);
 router.post('/reject-consignment', authenticateToken, rejectConsignment);
 
