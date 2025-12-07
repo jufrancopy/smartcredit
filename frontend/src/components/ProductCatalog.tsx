@@ -133,6 +133,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
             (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || !inv.pagado)
           );
           
+          // Obtener el estado del producto si ya fue comprado
+          const investmentStatus = investments?.find((inv: any) => 
+            inv.productId === product.id && 
+            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || !inv.pagado)
+          );
+          
           return (
             <div key={product.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
               {product.imagen_url && (
@@ -152,9 +158,13 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {product.categoria}
                     </span>
-                    {yaComprado && (
-                      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
-                        ✅ Solicitado
+                    {yaComprado && investmentStatus && (
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        investmentStatus.pagado 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {investmentStatus.pagado ? '✅ Aprobado' : '⏳ Pendiente'}
                       </span>
                     )}
                   </div>
