@@ -62,7 +62,7 @@ const TiendaPublica: React.FC = () => {
           {/* WhatsApp Contact */}
           <div className="mt-6">
             <a
-              href={`https://wa.me/${client.whatsapp.startsWith('595') ? client.whatsapp : '595' + client.whatsapp}?text=Hola! Vi tu tienda online "${client.tienda_nombre || `Tienda de ${client.nombre} ${client.apellido}`}" y me interesa conocer más sobre tus productos disponibles.`}
+              href={`https://wa.me/${client.whatsapp.startsWith('595') ? client.whatsapp : '595' + client.whatsapp}?text=${encodeURIComponent(`Hola! Vi tu tienda online "${client.tienda_nombre || `Tienda de ${client.nombre} ${client.apellido}`}" y me interesa conocer más sobre tus productos disponibles.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -114,7 +114,13 @@ const TiendaPublica: React.FC = () => {
                   
                   <div className="mt-6">
                     <a
-                      href={`https://wa.me/${client.whatsapp.startsWith('595') ? client.whatsapp : '595' + client.whatsapp}?text=Hola! Vi tu tienda online y me interesa:%0A%0A📦 *${product.nombre}*%0A💰 Precio: ${product.precio_cliente.toLocaleString('es-PY')} Gs%0A📝 ${product.descripcion}%0A%0A¿Está disponible? ¿Cuándo podríamos coordinar?`}
+                      href={`https://wa.me/${client.whatsapp.startsWith('595') ? client.whatsapp : '595' + client.whatsapp}?text=${encodeURIComponent(`Hola! Vi tu tienda online y me interesa:
+
+📦 *${product.nombre}*
+💰 Precio: ${product.precio_cliente.toLocaleString('es-PY')} Gs
+📝 ${product.descripcion}
+
+¿Está disponible? ¿Cuándo podríamos coordinar?`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-center block"
