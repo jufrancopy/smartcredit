@@ -113,6 +113,9 @@ const ProductManager: React.FC = () => {
     setSelectedImage(null);
     setImagePreview('');
     setUploadedImageUrl('');
+    // Limpiar el input de archivo
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   };
 
   const handleStockUpdate = () => {
@@ -143,7 +146,10 @@ const ProductManager: React.FC = () => {
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Productos</h2>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
           className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300"
         >
           ➕ Agregar Producto
