@@ -177,10 +177,15 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </label>
                 <input
                   type="text"
-                  value={precioReventa.toLocaleString('es-PY')}
+                  value={precioReventa === 0 ? '' : precioReventa.toLocaleString('es-PY')}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
-                    setPrecioReventa(value ? parseInt(value) : selectedProduct.precio_venta_sugerido);
+                    setPrecioReventa(value ? parseInt(value) : 0);
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value) {
+                      setPrecioReventa(selectedProduct.precio_venta_sugerido);
+                    }
                   }}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
                   placeholder="Precio de venta"
@@ -205,7 +210,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
                 <div className="flex justify-between text-sm text-green-600 mt-1">
                   <span>Ganancia potencial:</span>
-                  <span>+{((precioReventa - selectedProduct.precio_compra) * cantidad).toLocaleString('es-PY')} Gs</span>
+                  <span>+{((precioReventa || selectedProduct.precio_venta_sugerido) - selectedProduct.precio_compra) * cantidad).toLocaleString('es-PY')} Gs</span>
                 </div>
               </div>
               
