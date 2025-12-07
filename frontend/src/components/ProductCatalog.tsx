@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGetProducts, useBuyProduct } from '../queries';
+import { useGetProducts, useBuyProduct, useGetUserInvestments } from '../queries';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,7 @@ interface ProductCatalogProps {
 
 const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible }) => {
   const { data: products, isLoading, error } = useGetProducts();
+  const { data: investments } = useGetUserInvestments();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [cantidad, setCantidad] = useState(1);
   const [precioReventa, setPrecioReventa] = useState(0);
@@ -75,6 +76,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
           const montoTotal = product.precio_compra * 1;
           const puedeComprar = fondoDisponible >= montoTotal && product.stock_disponible > 0;
           
+          // Verificar si ya tiene este producto (activo o pendiente)
+          const yaComprado = investments?.some((inv: any) => 
+            inv.productId === product.id && 
+            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || !inv.pagado)
+          );
+          
           return (
             <div key={product.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
               {product.imagen_url && (
@@ -90,9 +97,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-lg font-bold text-gray-800">{product.nombre}</h4>
-                  <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
-                    {product.categoria}
-                  </span>
+                  <div className="flex gap-2">
+                    <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
+                      {product.categoria}
+                    </span>
+                    {yaComprado && (
+                      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
+                        ✅ Solicitado
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 <p className="text-gray-600 text-sm mb-4">{product.descripcion}</p>
@@ -122,14 +136,15 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 
                 <button
                   onClick={() => handleBuyClick(product)}
-                  disabled={product.stock_disponible === 0}
+                  disabled={product.stock_disponible === 0 || yaComprado}
                   className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
-                    product.stock_disponible > 0
+                    product.stock_disponible > 0 && !yaComprado
                       ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {product.stock_disponible === 0 ? '❌ Sin stock' : '🛒 Ver opciones'}
+                  {product.stock_disponible === 0 ? '❌ Sin stock' : 
+                   yaComprado ? '✅ Ya solicitado' : '🛒 Ver opciones'}
                 </button>
               </div>
             </div>
