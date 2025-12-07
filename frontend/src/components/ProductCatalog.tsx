@@ -87,9 +87,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   <div className="flex justify-between items-start mb-2">
                     <h5 className="font-semibold text-gray-800">{investment.product.nombre}</h5>
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      investment.pagado ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                      investment.pagado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {investment.pagado ? 'Pagado' : 'Consignación'}
+                      {investment.pagado ? 'Aprobado' : 'Pendiente de Aprobación'}
                     </span>
                   </div>
                   
