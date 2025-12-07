@@ -77,11 +77,11 @@ const ProductManager: React.FC = () => {
       nombre: formData.get('nombre'),
       descripcion: formData.get('descripcion'),
       categoria: formData.get('categoria'),
-      precio_compra: parseInt(formData.get('precio_compra') as string),
-      precio_venta_sugerido: parseInt(formData.get('precio_venta_sugerido') as string),
-      stock_disponible: parseInt(formData.get('stock_disponible') as string),
+      precio_compra: parseInt((formData.get('precio_compra') as string).replace(/\D/g, '')),
+      precio_venta_sugerido: parseInt((formData.get('precio_venta_sugerido') as string).replace(/\D/g, '')),
+      stock_disponible: parseFloat(formData.get('stock_disponible') as string),
       unidad: formData.get('unidad'),
-      cantidad_por_unidad: formData.get('cantidad_por_unidad'),
+      cantidad_por_unidad: parseFloat(formData.get('cantidad_por_unidad') as string),
       imagen_url: uploadedImageUrl || editingProduct?.imagen_url
     };
     
@@ -320,11 +320,57 @@ const ProductManager: React.FC = () => {
                   </div>
                 )}
               </div>
-              <input name="precio_compra" type="number" defaultValue={editingProduct?.precio_compra} placeholder="Precio Compra (Gs)" className="w-full p-3 border rounded-lg" required />
-              <input name="precio_venta_sugerido" type="number" defaultValue={editingProduct?.precio_venta_sugerido} placeholder="Precio Venta (Gs)" className="w-full p-3 border rounded-lg" required />
-              <input name="stock_disponible" type="number" defaultValue={editingProduct?.stock_disponible} placeholder="Stock" className="w-full p-3 border rounded-lg" required />
-              <input name="unidad" defaultValue={editingProduct?.unidad} placeholder="Unidad (ej: paquete)" className="w-full p-3 border rounded-lg" required />
-              <input name="cantidad_por_unidad" type="number" defaultValue={editingProduct?.cantidad_por_unidad} placeholder="Cantidad por unidad" className="w-full p-3 border rounded-lg" required />
+              <input 
+                name="precio_compra" 
+                type="text" 
+                defaultValue={editingProduct?.precio_compra?.toLocaleString('es-PY')} 
+                placeholder="Precio Compra (Gs)" 
+                className="w-full p-3 border rounded-lg" 
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  e.target.value = value ? parseInt(value).toLocaleString('es-PY') : '';
+                }}
+                required 
+              />
+              <input 
+                name="precio_venta_sugerido" 
+                type="text" 
+                defaultValue={editingProduct?.precio_venta_sugerido?.toLocaleString('es-PY')} 
+                placeholder="Precio Venta (Gs)" 
+                className="w-full p-3 border rounded-lg" 
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  e.target.value = value ? parseInt(value).toLocaleString('es-PY') : '';
+                }}
+                required 
+              />
+              <input 
+                name="stock_disponible" 
+                type="number" 
+                step="0.01" 
+                defaultValue={editingProduct?.stock_disponible} 
+                placeholder="Stock disponible" 
+                className="w-full p-3 border rounded-lg" 
+                required 
+              />
+              <select name="unidad" defaultValue={editingProduct?.unidad} className="w-full p-3 border rounded-lg" required>
+                <option value="">Seleccionar unidad</option>
+                <option value="unidad">Unidad (productos individuales)</option>
+                <option value="paquete">Paquete (cajas, bolsas)</option>
+                <option value="kilo">Kilo (peso)</option>
+                <option value="litro">Litro (líquidos)</option>
+                <option value="metro">Metro (telas, cables)</option>
+                <option value="docena">Docena (12 unidades)</option>
+              </select>
+              <input 
+                name="cantidad_por_unidad" 
+                type="number" 
+                step="0.01" 
+                defaultValue={editingProduct?.cantidad_por_unidad} 
+                placeholder="Cantidad por unidad (ej: 1 para kilo, 12 para docena)" 
+                className="w-full p-3 border rounded-lg" 
+                required 
+              />
               
               <div className="flex space-x-3">
                 <button type="submit" className="flex-1 bg-purple-600 text-white py-2 rounded-lg">

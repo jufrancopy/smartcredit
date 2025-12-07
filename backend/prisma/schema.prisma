@@ -118,9 +118,9 @@ model Product {
   precio_compra     Float        // Lo que paga SmartCredit
   precio_venta_sugerido Float    // Precio sugerido para el cliente
   unidad            String       // "caja", "maple", "kg", etc.
-  cantidad_por_unidad Int        // Ej: 12 leches por caja
+  cantidad_por_unidad Float      // Ej: 12 leches por caja, 1.0 para kg
   imagen_url        String?
-  stock_disponible  Int          @default(0)
+  stock_disponible  Float        @default(0)
   activo            Boolean      @default(true)
   investments       Investment[]
   createdAt         DateTime     @default(now())
@@ -133,7 +133,7 @@ model Investment {
   userId            Int
   product           Product      @relation(fields: [productId], references: [id])
   productId         Int
-  cantidad_comprada Int
+  cantidad_comprada Float        // Soporta decimales para kg, litros, etc.
   precio_unitario   Float        // Precio al momento de la compra
   monto_total       Float        // cantidad * precio_unitario
   fecha_compra      DateTime     @default(now())
@@ -152,7 +152,7 @@ model SalesReport {
   userId            Int
   investment        Investment @relation(fields: [investmentId], references: [id])
   investmentId      Int
-  cantidad_vendida  Int
+  cantidad_vendida  Float      // Soporta decimales para kg, litros, etc.
   precio_venta      Float      // Precio al que vendió el cliente
   monto_total_venta Float      // cantidad * precio_venta
   ganancia_generada Float      // monto_total_venta - (cantidad * precio_compra_original)
@@ -184,7 +184,7 @@ model ClientProduct {
   descripcion String?
   categoria   String
   precio      Float
-  stock       Int      @default(0)
+  stock       Float    @default(0)  // Soporta decimales para kg, litros, etc.
   imagen_url  String?
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
