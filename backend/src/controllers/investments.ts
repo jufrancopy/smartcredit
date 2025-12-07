@@ -675,3 +675,31 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };
+
+// Actualizar precio de reventa de inversión
+export const updateInvestmentPrice = async (req: AuthRequest, res: Response) => {
+  try {
+    const { investmentId, nuevoPrecio } = req.body;
+    const userId = req.userId!;
+
+    // Verificar que la inversión pertenece al usuario
+    const investment = await prisma.investment.findFirst({
+      where: { id: investmentId, userId }
+    });
+
+    if (!investment) {
+      return res.status(404).json({ error: 'Inversión no encontrada' });
+    }
+
+    // Actualizar precio de reventa
+    const updatedInvestment = await prisma.investment.update({
+      where: { id: investmentId },
+      data: { precio_reventa_cliente: nuevoPrecio }
+    });
+
+    res.json({ message: 'Precio actualizado exitosamente', investment: updatedInvestment });
+  } catch (error) {
+    console.error('Error updating investment price:', error);
+    res.status(500).json({ error: 'Error al actualizar precio' });
+  }
+};

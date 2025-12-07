@@ -16,7 +16,8 @@ import {
   payMicrocredit,
   getPendingConsignments,
   approveConsignment,
-  rejectConsignment
+  rejectConsignment,
+  updateInvestmentPrice
 } from '../controllers/investments';
 
 const router = express.Router();
@@ -43,6 +44,7 @@ router.get('/my-investments', authenticateToken, getUserInvestments);
 router.post('/report-sale', authenticateToken, reportSale);
 router.get('/dashboard', authenticateToken, getInvestmentDashboard);
 router.post('/pay-microcredit', authenticateToken, payMicrocredit);
+router.put('/update-price', authenticateToken, updateInvestmentPrice);
 
 // Rutas para admin - consignaciones
 router.get('/pending-consignments', authenticateToken, getPendingConsignments);

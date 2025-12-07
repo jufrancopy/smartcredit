@@ -14,6 +14,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [cantidad, setCantidad] = useState(1);
   const [precioReventa, setPrecioReventa] = useState(0);
+  const [editingInvestment, setEditingInvestment] = useState<any>(null);
+  const [newPrice, setNewPrice] = useState(0);
   const queryClient = useQueryClient();
 
   const buyProduct = useBuyProduct({
@@ -70,6 +72,55 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
         <h3 className="text-2xl font-bold text-gray-800 mb-2">🛒 Catálogo de Productos</h3>
         <p className="text-gray-600">Invierte tu fondo acumulado en productos para revender</p>
       </div>
+      
+      {/* Sección de productos ya comprados */}
+      {investments && investments.length > 0 && (
+        <div className="mb-8">
+          <h4 className="text-xl font-bold text-gray-800 mb-4">💼 Mis Productos</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {investments.map((investment: any) => {
+              const cantidadRestante = investment.cantidad_comprada - (investment.cantidad_vendida || 0);
+              if (cantidadRestante <= 0) return null;
+              
+              return (
+                <div key={investment.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-semibold text-gray-800">{investment.product.nombre}</h5>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      investment.pagado ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {investment.pagado ? 'Pagado' : 'Consignación'}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm text-gray-600 mb-3">
+                    <div className="flex justify-between">
+                      <span>Cantidad disponible:</span>
+                      <span className="font-semibold">{cantidadRestante} {investment.product.unidad}s</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Mi precio actual:</span>
+                      <span className="font-semibold text-green-600">
+                        {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setEditingInvestment(investment);
+                      setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
+                    }}
+                    className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    ✏️ Editar Precio
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product: any) => {
@@ -267,6 +318,96 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600"
                 >
                   Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal para editar precio de reventa */}
+      {editingInvestment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Editar Precio de Reventa</h3>
+              <button onClick={() => setEditingInvestment(null)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800">{editingInvestment.product.nombre}</h4>
+                <p className="text-sm text-gray-600">Cantidad disponible: {editingInvestment.cantidad_comprada - (editingInvestment.cantidad_vendida || 0)} {editingInvestment.product.unidad}s</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nuevo precio de reventa (por {editingInvestment.product.unidad})
+                </label>
+                <input
+                  type="text"
+                  value={newPrice === 0 ? '' : newPrice.toLocaleString('es-PY')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setNewPrice(value ? parseInt(value) : 0);
+                  }}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nuevo precio"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Precio actual: {(editingInvestment.precio_reventa_cliente || editingInvestment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span>Costo por unidad:</span>
+                  <span className="font-bold">{editingInvestment.precio_unitario.toLocaleString('es-PY')} Gs</span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span>Nueva ganancia por unidad:</span>
+                  <span className="font-bold text-green-600">+{((newPrice || editingInvestment.product.precio_venta_sugerido) - editingInvestment.precio_unitario).toLocaleString('es-PY')} Gs</span>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setEditingInvestment(null)}
+                  className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/update-price`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                          investmentId: editingInvestment.id,
+                          nuevoPrecio: newPrice || editingInvestment.product.precio_venta_sugerido
+                        })
+                      });
+                      
+                      if (response.ok) {
+                        toast.success('Precio actualizado exitosamente');
+                        setEditingInvestment(null);
+                        queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
+                      } else {
+                        throw new Error('Error al actualizar precio');
+                      }
+                    } catch (error) {
+                      toast.error('Error al actualizar precio');
+                    }
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+                >
+                  Actualizar Precio
                 </button>
               </div>
             </div>
