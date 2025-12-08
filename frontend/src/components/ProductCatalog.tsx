@@ -96,7 +96,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product: any) => {
-          const montoTotal = product.precio_compra * 1;
+          const montoTotal = product.precio_venta_sugerido * 1;
           const puedeComprar = fondoDisponible >= montoTotal && product.stock_disponible > 0;
           
           // Verificar si ya tiene este producto (activo o pendiente)
@@ -360,7 +360,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex justify-between mb-2">
                   <span>Precio unitario:</span>
-                  <span className="font-bold">{selectedProduct.precio_compra.toLocaleString('es-PY')} Gs</span>
+                  <span className="font-bold">{selectedProduct.precio_venta_sugerido.toLocaleString('es-PY')} Gs</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Cantidad:</span>
@@ -368,16 +368,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total a pagar:</span>
-                  <span className="text-purple-600">{(selectedProduct.precio_compra * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
+                  <span className="text-purple-600">{(selectedProduct.precio_venta_sugerido * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
                 </div>
                 <div className="flex justify-between text-sm text-green-600 mt-1">
                   <span>Ganancia potencial:</span>
-                  <span>+{(((precioReventa || selectedProduct.precio_venta_sugerido) - selectedProduct.precio_compra) * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
+                  <span>+{(((precioReventa || selectedProduct.precio_venta_sugerido) - selectedProduct.precio_venta_sugerido) * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
                 </div>
               </div>
               
               <div className="space-y-3">
-                {fondoDisponible >= (selectedProduct.precio_compra * (parseFloat(cantidad) || 1)) && (
+                {fondoDisponible >= (selectedProduct.precio_venta_sugerido * (parseFloat(cantidad) || 1)) && (
                   <button
                     onClick={() => {
                       buyProduct.mutate({
