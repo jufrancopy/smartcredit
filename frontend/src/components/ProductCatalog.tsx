@@ -186,7 +186,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               
               {/* Card del producto del catálogo */}
               <div className={`bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 ${
-                investmentStatus && investmentStatus.pagado ? 'opacity-75' : ''
+                investmentStatus && investmentStatus.pagado && product.stock_disponible === 0 ? 'opacity-75' : ''
               }`}>
               {product.imagen_url && (
                 <div className="h-48 bg-gray-200 overflow-hidden">
@@ -248,8 +248,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   </div>
                 </div>
                 
-                {/* Mostrar botón de restock si el cliente ya pagó completamente */}
-                {investmentStatus && investmentStatus.pagado ? (
+                {/* Mostrar botón de restock si el cliente pagó completamente Y el stock es 0 */}
+                {investmentStatus && investmentStatus.pagado && product.stock_disponible === 0 ? (
                   <button
                     onClick={() => requestRestock.mutate({ productId: product.id })}
                     disabled={requestRestock.isLoading}
