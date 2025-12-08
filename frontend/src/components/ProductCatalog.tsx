@@ -514,8 +514,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
       
       {/* Modal para pago parcial de consignación */}
       {payingInvestment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-gray-800">Pagar Consignación</h3>
               <button onClick={() => setPayingInvestment(null)} className="text-gray-500 hover:text-gray-700">
@@ -745,12 +745,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                       toast.error(error.message);
                     }
                   }}
-                  disabled={
-                    !paymentReceipt || 
-                    (paymentMode === 'quantity' 
-                      ? (parseFloat(paymentQuantity) <= 0 || parseFloat(paymentQuantity) > payingInvestment.cantidad_restante)
-                      : (paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente))
-                  }
+                  disabled={false}
                   className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
                 >
                   💰 Confirmar Pago
