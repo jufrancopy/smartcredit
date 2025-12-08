@@ -12,7 +12,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const { data: products, isLoading, error } = useGetProducts();
   const { data: investments } = useGetUserInvestments();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [cantidad, setCantidad] = useState(1);
+  const [cantidad, setCantidad] = useState<number>(1);
   const [precioReventa, setPrecioReventa] = useState(0);
   const [editingInvestment, setEditingInvestment] = useState<any>(null);
   const [newPrice, setNewPrice] = useState(0);
@@ -276,7 +276,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     if (value === '') {
                       setCantidad(0);
                     } else {
-                      const numValue = parseInt(value);
+                      // Permitir decimales con punto o coma
+                      const cleanValue = value.replace(',', '.');
+                      const numValue = parseFloat(cleanValue);
                       if (!isNaN(numValue) && numValue > 0) {
                         setCantidad(numValue);
                       }
@@ -288,7 +290,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     }
                   }}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
-                  placeholder="Cantidad"
+                  placeholder="Cantidad (ej: 3.5)"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Máximo disponible: {selectedProduct.stock_disponible} {selectedProduct.unidad}s
