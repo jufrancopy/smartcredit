@@ -67,9 +67,9 @@ export const buyProduct = async (req: AuthRequest, res: Response) => {
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-    if (product.stock_disponible < cantidad) return res.status(400).json({ error: 'Stock insuficiente' });
+    if (product.stock_disponible < parseFloat(cantidad)) return res.status(400).json({ error: 'Stock insuficiente' });
 
-    const montoTotal = product.precio_compra * cantidad;
+    const montoTotal = product.precio_compra * parseFloat(cantidad);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     
     const esConsignacion = tipo_pago === 'microcredito';
@@ -83,7 +83,7 @@ export const buyProduct = async (req: AuthRequest, res: Response) => {
     const investment = await prisma.$transaction(async (tx) => {
       const newInvestment = await tx.investment.create({
         data: {
-          userId, productId, cantidad_comprada: cantidad,
+          userId, productId, cantidad_comprada: parseFloat(cantidad),
           precio_unitario: product.precio_compra, 
           precio_reventa_cliente: precio_reventa_cliente || product.precio_venta_sugerido,
           monto_total: montoTotal,
@@ -104,7 +104,7 @@ export const buyProduct = async (req: AuthRequest, res: Response) => {
 
       await tx.product.update({
         where: { id: productId },
-        data: { stock_disponible: { decrement: cantidad } }
+        data: { stock_disponible: { decrement: parseFloat(cantidad) } }
       });
 
       return newInvestment;
