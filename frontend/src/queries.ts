@@ -337,6 +337,20 @@ export const useGetApprovedConsignments = () => {
   });
 };
 
+// Get paid purchases
+export const useGetPaidPurchases = () => {
+  return useQuery({
+    queryKey: ['paid-purchases'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/paid-purchases`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 // Approve consignment
 export const useApproveConsignment = (options?: UseMutationOptions<any, Error, any>) => {
   return useMutation({

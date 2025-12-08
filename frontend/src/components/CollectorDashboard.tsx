@@ -5,6 +5,7 @@ import UploadReceipt from './UploadReceipt';
 import StoreMonitor from './StoreMonitor';
 import ConsignmentManager from './ConsignmentManager';
 import ConsignmentTracking from './ConsignmentTracking';
+import PurchaseTracking from './PurchaseTracking';
 import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF } from '../queries';
 import '../styles/animations.css';
 
@@ -1066,6 +1067,16 @@ const CollectorDashboard: React.FC = () => {
                 >
                   📋 Consignaciones
                 </button>
+                <button
+                  onClick={() => setActiveTab('purchases')}
+                  className={`${
+                    activeTab === 'purchases'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                >
+                  💰 Compras con Fondo
+                </button>
               </nav>
             </div>
           </div>
@@ -1115,6 +1126,12 @@ const CollectorDashboard: React.FC = () => {
                 </div>
                 <ConsignmentTracking />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'purchases' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <PurchaseTracking />
             </div>
           )}
         </div>

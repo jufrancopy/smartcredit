@@ -630,8 +630,9 @@ export const getApprovedConsignments = async (req: AuthRequest, res: Response) =
 
     const approvedInvestments = await prisma.investment.findMany({
       where: { 
-        pagado: true,
+        pagado: false,
         tipo_pago: 'microcredito',
+        fecha_limite_pago: null, // Aprobadas
         estado: { in: ['activo', 'vendido_parcial'] }
       },
       include: {
@@ -646,6 +647,34 @@ export const getApprovedConsignments = async (req: AuthRequest, res: Response) =
   } catch (error) {
     console.error('Error fetching approved consignments:', error);
     res.status(500).json({ error: 'Error al obtener consignaciones aprobadas' });
+  }
+};
+
+// ADMIN/COBRADOR: Obtener compras pagadas con fondo
+export const getPaidPurchases = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const paidPurchases = await prisma.investment.findMany({
+      where: { 
+        tipo_pago: 'inmediato',
+        pagado: true,
+        estado: { in: ['activo', 'vendido_parcial'] }
+      },
+      include: {
+        user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
+        product: true,
+        salesReports: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(paidPurchases);
+  } catch (error) {
+    console.error('Error fetching paid purchases:', error);
+    res.status(500).json({ error: 'Error al obtener compras pagadas' });
   }
 };
 
