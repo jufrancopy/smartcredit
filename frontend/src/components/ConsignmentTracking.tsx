@@ -154,7 +154,7 @@ const ConsignmentTracking: React.FC = () => {
         </div>
       </div>
     )}
-  </div>
+    </>
   );
 };
 
