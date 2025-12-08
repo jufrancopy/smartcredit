@@ -18,6 +18,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const [newPrice, setNewPrice] = useState(0);
   const [payingInvestment, setPayingInvestment] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentQuantity, setPaymentQuantity] = useState('1');
+  const [paymentMode, setPaymentMode] = useState<'amount' | 'quantity'>('quantity');
   const queryClient = useQueryClient();
 
   const buyProduct = useBuyProduct({
@@ -135,8 +137,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         <button
                           onClick={() => {
                             const saldoPendiente = investment.monto_total - (investment.monto_pagado || 0);
-                            setPayingInvestment({...investment, saldo_pendiente: saldoPendiente});
+                            const cantidadRestante = investment.cantidad_comprada - (investment.cantidad_vendida || 0);
+                            setPayingInvestment({...investment, saldo_pendiente: saldoPendiente, cantidad_restante: cantidadRestante});
                             setPaymentAmount(saldoPendiente);
+                            setPaymentQuantity('1');
+                            setPaymentMode('quantity');
                           }}
                           className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
                         >
@@ -488,12 +493,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex justify-between mb-2">
-                  <span>Monto total:</span>
-                  <span className="font-bold">{payingInvestment.monto_total.toLocaleString('es-PY')} Gs</span>
+                  <span>Cantidad total:</span>
+                  <span className="font-bold">{payingInvestment.cantidad_comprada} {payingInvestment.product.unidad}s</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <span>Ya pagado:</span>
-                  <span className="font-bold text-green-600">{(payingInvestment.monto_total - payingInvestment.saldo_pendiente).toLocaleString('es-PY')} Gs</span>
+                  <span>Cantidad restante:</span>
+                  <span className="font-bold text-blue-600">{payingInvestment.cantidad_restante} {payingInvestment.product.unidad}s</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span>Precio por {payingInvestment.product.unidad}:</span>
+                  <span className="font-bold">{payingInvestment.precio_unitario.toLocaleString('es-PY')} Gs</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Saldo pendiente:</span>
@@ -501,44 +510,134 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monto a pagar
-                </label>
-                <input
-                  type="text"
-                  value={paymentAmount === 0 ? '' : paymentAmount.toLocaleString('es-PY')}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    setPaymentAmount(value ? parseInt(value) : 0);
-                  }}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="Ingrese monto"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Máximo: {payingInvestment.saldo_pendiente.toLocaleString('es-PY')} Gs
-                </p>
+              {/* Selector de modo de pago */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 mb-3">¿Cómo quieres pagar?</p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setPaymentMode('quantity');
+                      setPaymentQuantity('1');
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${
+                      paymentMode === 'quantity'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300'
+                    }`}
+                  >
+                    📦 Por Cantidad
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPaymentMode('amount');
+                      setPaymentAmount(0);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-colors ${
+                      paymentMode === 'amount'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-600 border border-gray-300'
+                    }`}
+                  >
+                    💰 Por Monto
+                  </button>
+                </div>
               </div>
               
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setPaymentAmount(payingInvestment.saldo_pendiente)}
-                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-blue-700 text-sm"
-                >
-                  Pagar Todo
-                </button>
-                <button
-                  onClick={() => setPaymentAmount(Math.floor(payingInvestment.saldo_pendiente / 2))}
-                  className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-gray-700 text-sm"
-                >
-                  Pagar Mitad
-                </button>
-              </div>
+              {paymentMode === 'quantity' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cantidad a pagar ({payingInvestment.product.unidad}s)
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentQuantity}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const regex = /^[0-9]*[.,]?[0-9]*$/;
+                      if (value === '' || regex.test(value)) {
+                        setPaymentQuantity(value.replace(',', '.'));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!paymentQuantity || parseFloat(paymentQuantity) <= 0) {
+                        setPaymentQuantity('1');
+                      }
+                    }}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Ej: 1.5"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Máximo: {payingInvestment.cantidad_restante} {payingInvestment.product.unidad}s
+                  </p>
+                  <div className="mt-2 p-2 bg-green-50 rounded border">
+                    <p className="text-sm text-green-700">
+                      💰 Monto a pagar: <span className="font-bold">
+                        {(payingInvestment.precio_unitario * (parseFloat(paymentQuantity) || 1)).toLocaleString('es-PY')} Gs
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Monto a pagar
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentAmount === 0 ? '' : paymentAmount.toLocaleString('es-PY')}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setPaymentAmount(value ? parseInt(value) : 0);
+                    }}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Ingrese monto"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Máximo: {payingInvestment.saldo_pendiente.toLocaleString('es-PY')} Gs
+                  </p>
+                </div>
+              )}
+              
+              {paymentMode === 'quantity' ? (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setPaymentQuantity(payingInvestment.cantidad_restante.toString())}
+                    className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-blue-700 text-sm"
+                  >
+                    Pagar Todo
+                  </button>
+                  <button
+                    onClick={() => setPaymentQuantity((payingInvestment.cantidad_restante / 2).toString())}
+                    className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-gray-700 text-sm"
+                  >
+                    Pagar Mitad
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setPaymentAmount(payingInvestment.saldo_pendiente)}
+                    className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-blue-700 text-sm"
+                  >
+                    Pagar Todo
+                  </button>
+                  <button
+                    onClick={() => setPaymentAmount(Math.floor(payingInvestment.saldo_pendiente / 2))}
+                    className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-gray-700 text-sm"
+                  >
+                    Pagar Mitad
+                  </button>
+                </div>
+              )}
               
               <div className="space-y-3">
                 <button
                   onClick={async () => {
                     try {
+                      const finalAmount = paymentMode === 'quantity' 
+                        ? payingInvestment.precio_unitario * (parseFloat(paymentQuantity) || 1)
+                        : paymentAmount;
+                        
                       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/pay-microcredit`, {
                         method: 'POST',
                         headers: {
@@ -547,7 +646,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         },
                         body: JSON.stringify({
                           investmentId: payingInvestment.id,
-                          monto: paymentAmount
+                          monto: finalAmount
                         })
                       });
                       
@@ -565,7 +664,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                       toast.error(error.message);
                     }
                   }}
-                  disabled={paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente}
+                  disabled={
+                    paymentMode === 'quantity' 
+                      ? (parseFloat(paymentQuantity) <= 0 || parseFloat(paymentQuantity) > payingInvestment.cantidad_restante)
+                      : (paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente)
+                  }
                   className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
                 >
                   💰 Confirmar Pago
