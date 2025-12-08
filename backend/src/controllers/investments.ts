@@ -372,7 +372,7 @@ export const getClientProducts = async (req: Request, res: Response) => {
     // Obtener cliente por slug
     const client = await prisma.user.findUnique({
       where: { tienda_slug: clienteSlug },
-      select: { id: true, nombre: true, apellido: true, whatsapp: true, tienda_nombre: true, tienda_activa: true }
+      select: { id: true, nombre: true, apellido: true, whatsapp: true, tienda_nombre: true, tienda_activa: true, tienda_template: true }
     });
 
     if (!client || !client.tienda_activa) {
