@@ -276,11 +276,17 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     if (value === '') {
                       setCantidad(0);
                     } else {
-                      // Permitir decimales con punto o coma
-                      const cleanValue = value.replace(',', '.');
-                      const numValue = parseFloat(cleanValue);
-                      if (!isNaN(numValue) && numValue > 0) {
-                        setCantidad(numValue);
+                      // Permitir solo números, punto y coma
+                      const regex = /^[0-9]*[.,]?[0-9]*$/;
+                      if (regex.test(value)) {
+                        const cleanValue = value.replace(',', '.');
+                        const numValue = parseFloat(cleanValue);
+                        if (!isNaN(numValue)) {
+                          setCantidad(numValue);
+                        } else if (value.endsWith('.') || value.endsWith(',')) {
+                          // Permitir escribir el punto/coma
+                          setCantidad(parseFloat(value.slice(0, -1)) || 0);
+                        }
                       }
                     }
                   }}
