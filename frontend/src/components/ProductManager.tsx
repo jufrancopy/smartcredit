@@ -1,7 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGetProducts, useCreateProduct, useUpdateProduct, useUpdateStock, useDeleteProduct, useUploadProductImage } from '../queries';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+
+// Componente para seleccionar imágenes existentes
+const ExistingImageSelector: React.FC<{ onSelect: (imageUrl: string) => void; currentImage?: string }> = ({ onSelect, currentImage }) => {
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [showImages, setShowImages] = useState(false);
+  
+  useEffect(() => {
+    // Obtener imágenes existentes de productos
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/products`)
+      .then(res => res.json())
+      .then(products => {
+        const images = products
+          .filter((p: any) => p.imagen_url)
+          .map((p: any) => p.imagen_url)
+          .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index); // Eliminar duplicados
+        setExistingImages(images);
+      })
+      .catch(console.error);
+  }, []);
+  
+  if (existingImages.length === 0) return null;
+  
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setShowImages(!showImages)}
+        className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-gray-700"
+      >
+        {showImages ? 'Ocultar' : `Ver ${existingImages.length} imágenes disponibles`}
+      </button>
+      
+      {showImages && (
+        <div className="mt-2 grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+          {existingImages.map((imageUrl, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => {
+                onSelect(imageUrl);
+                setShowImages(false);
+              }}
+              className={`relative border-2 rounded overflow-hidden hover:border-purple-500 ${
+                currentImage === imageUrl ? 'border-purple-500' : 'border-gray-200'
+              }`}
+            >
+              <img 
+                src={`${import.meta.env.VITE_API_BASE_URL}${imageUrl}`}
+                alt={`Imagen ${index + 1}`}
+                className="w-full h-12 object-cover"
+              />
+              {currentImage === imageUrl && (
+                <div className="absolute inset-0 bg-purple-500 bg-opacity-20 flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ProductManager: React.FC = () => {
   const { data: products, isLoading, error } = useGetProducts();
@@ -308,14 +371,34 @@ const ProductManager: React.FC = () => {
               <input name="categoria" defaultValue={editingProduct?.categoria} placeholder="Categoría" className="w-full p-3 border rounded-lg" required />
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Foto del producto</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  capture="environment"
-                  onChange={handleImageChange}
-                  className="w-full p-3 border rounded-lg"
-                />
+                <label className="block text-sm font-medium text-gray-700">Imagen del producto</label>
+                
+                {/* Selector de imágenes existentes */}
+                <div className="mb-3">
+                  <label className="block text-xs text-gray-500 mb-2">Reutilizar imagen existente:</label>
+                  <ExistingImageSelector 
+                    onSelect={(imageUrl) => {
+                      setUploadedImageUrl(imageUrl);
+                      setImagePreview(`${import.meta.env.VITE_API_BASE_URL}${imageUrl}`);
+                    }}
+                    currentImage={uploadedImageUrl || editingProduct?.imagen_url}
+                  />
+                </div>
+                
+                <div className="text-center text-xs text-gray-500 my-2">O</div>
+                
+                {/* Subir nueva imagen */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-2">Subir nueva imagen:</label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    onChange={handleImageChange}
+                    className="w-full p-3 border rounded-lg"
+                  />
+                </div>
+                
                 {(imagePreview || editingProduct?.imagen_url) && (
                   <div className="mt-2">
                     <img 
