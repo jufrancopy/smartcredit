@@ -269,24 +269,26 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   Cantidad a comprar
                 </label>
                 <input
-                  type="number"
-                  min="1"
-                  max={selectedProduct.stock_disponible}
-                  value={cantidad}
+                  type="text"
+                  value={cantidad === 0 ? '' : cantidad}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || value === '0') {
+                    if (value === '') {
                       setCantidad(0);
                     } else {
-                      setCantidad(parseInt(value) || 0);
+                      const numValue = parseInt(value);
+                      if (!isNaN(numValue) && numValue > 0) {
+                        setCantidad(numValue);
+                      }
                     }
                   }}
-                  onBlur={(e) => {
-                    if (cantidad === 0 || !e.target.value) {
+                  onBlur={() => {
+                    if (cantidad === 0) {
                       setCantidad(1);
                     }
                   }}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Cantidad"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Máximo disponible: {selectedProduct.stock_disponible} {selectedProduct.unidad}s
