@@ -131,14 +131,8 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Filtrar solo inversiones aprobadas (pagadas O consignaciones aprobadas)
-    const approvedInvestments = investments.filter(investment => {
-      if (investment.pagado) return true; // Pagadas completamente
-      if (investment.tipo_pago === 'microcredito' && !investment.fecha_limite_pago) return true; // Consignaciones aprobadas
-      return false; // Pendientes de aprobación
-    });
-
-    const investmentsWithStats = approvedInvestments.map(investment => {
+    // Mostrar todas las inversiones (aprobadas y pendientes)
+    const investmentsWithStats = investments.map(investment => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
       const gananciasGeneradas = investment.salesReports.reduce((sum, sale) => sum + sale.ganancia_generada, 0);
       const cantidadRestante = investment.cantidad_comprada - totalVendido;
@@ -151,7 +145,8 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
         ganancias_generadas: gananciasGeneradas,
         ganancia_potencial_restante: cantidadRestante * (investment.product.precio_venta_sugerido - investment.precio_unitario),
         saldo_pendiente: saldoPendiente,
-        porcentaje_pagado: (investment.monto_pagado / investment.monto_total) * 100
+        porcentaje_pagado: (investment.monto_pagado / investment.monto_total) * 100,
+        esta_aprobado: investment.pagado || (investment.tipo_pago === 'microcredito' && !investment.fecha_limite_pago)
       };
     });
 

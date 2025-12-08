@@ -116,29 +116,35 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     )}
                   </div>
                   
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        setEditingInvestment(investment);
-                        setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
-                      }}
-                      className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                    >
-                      ✏️ Editar Precio
-                    </button>
-                    {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
+                  {investment.esta_aprobado ? (
+                    <div className="space-y-2">
                       <button
                         onClick={() => {
-                          const saldoPendiente = investment.monto_total - (investment.monto_pagado || 0);
-                          setPayingInvestment({...investment, saldo_pendiente: saldoPendiente});
-                          setPaymentAmount(saldoPendiente);
+                          setEditingInvestment(investment);
+                          setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
                         }}
-                        className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                        className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
                       >
-                        💰 Pagar Consignación
+                        ✏️ Editar Precio
                       </button>
-                    )}
-                  </div>
+                      {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
+                        <button
+                          onClick={() => {
+                            const saldoPendiente = investment.monto_total - (investment.monto_pagado || 0);
+                            setPayingInvestment({...investment, saldo_pendiente: saldoPendiente});
+                            setPaymentAmount(saldoPendiente);
+                          }}
+                          className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          💰 Pagar Consignación
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-3 text-gray-500 text-sm">
+                      ⏳ Esperando aprobación del cobrador
+                    </div>
+                  )}
                 </div>
               );
             })}
