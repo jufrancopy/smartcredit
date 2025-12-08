@@ -351,6 +351,20 @@ export const useGetPaidPurchases = () => {
   });
 };
 
+// Get product payments history
+export const useGetProductPayments = () => {
+  return useQuery({
+    queryKey: ['product-payments'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/product-payments`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 // Approve consignment
 export const useApproveConsignment = (options?: UseMutationOptions<any, Error, any>) => {
   return useMutation({

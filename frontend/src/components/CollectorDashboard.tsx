@@ -6,7 +6,7 @@ import StoreMonitor from './StoreMonitor';
 import ConsignmentManager from './ConsignmentManager';
 import ConsignmentTracking from './ConsignmentTracking';
 import PurchaseTracking from './PurchaseTracking';
-import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF } from '../queries';
+import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF, useGetProductPayments } from '../queries';
 import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
@@ -660,6 +660,7 @@ interface InstallmentForCollector extends Installment {
 
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
+  const { data: productPayments } = useGetProductPayments();
   const confirmPaymentMutation = useConfirmPayment();
   const deletePaymentMutation = useDeletePayment();
 
@@ -1146,21 +1147,37 @@ const CollectorDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {loans?.flatMap((loan: any) => 
-                      loan.installments.flatMap((installment: any) => 
-                        installment.payments
-                          ?.filter((payment: any) => payment.confirmado)
-                          ?.map((payment: any) => ({
-                            id: payment.id,
-                            cliente: `${loan.user.nombre} ${loan.user.apellido}`,
-                            cuota: installment.numero_cuota,
-                            monto: payment.monto,
-                            fecha: payment.createdAt,
-                            loanId: loan.id,
-                            comision: payment.monto * COLLECTOR_PROFIT_PERCENTAGE
-                          }))
-                      )
-                    )
+                    {/* Combinar pagos de préstamos y productos */}
+                    {[
+                      // Pagos de préstamos
+                      ...(loans?.flatMap((loan: any) => 
+                        loan.installments.flatMap((installment: any) => 
+                          installment.payments
+                            ?.filter((payment: any) => payment.confirmado)
+                            ?.map((payment: any) => ({
+                              id: `loan-${payment.id}`,
+                              cliente: `${loan.user.nombre} ${loan.user.apellido}`,
+                              concepto: `Cuota #${installment.numero_cuota}`,
+                              monto: payment.monto,
+                              fecha: payment.createdAt,
+                              tipo: 'prestamo',
+                              loanId: loan.id,
+                              comision: payment.monto * COLLECTOR_PROFIT_PERCENTAGE
+                            }))
+                        )
+                      ) || []),
+                      // Pagos de productos
+                      ...(productPayments?.map((payment: any) => ({
+                        id: `product-${payment.id}`,
+                        cliente: payment.cliente,
+                        concepto: `${payment.producto} (${payment.cantidad} ${payment.unidad}s)`,
+                        monto: payment.monto_pagado,
+                        fecha: payment.fecha_pago,
+                        tipo: 'producto',
+                        comision: 0, // Los productos no generan comisión al cobrador
+                        comprobante_url: payment.comprobante_url
+                      })) || [])
+                    ]
                     ?.sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
                     ?.map((payment: any) => (
                       <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
@@ -1178,8 +1195,12 @@ const CollectorDashboard: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            #{payment.cuota}
+                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            payment.tipo === 'prestamo' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {payment.concepto}
                           </span>
                         </td>
                         <td className="py-4 px-6">

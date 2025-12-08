@@ -864,6 +864,46 @@ export const cancelInvestment = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// ADMIN/COBRADOR: Obtener historial de pagos de productos
+export const getProductPayments = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const productPayments = await prisma.investment.findMany({
+      where: {
+        tipo_pago: 'microcredito',
+        monto_pagado: { gt: 0 },
+        comprobante_pago: { not: null }
+      },
+      include: {
+        user: { select: { id: true, nombre: true, apellido: true } },
+        product: { select: { nombre: true, unidad: true } }
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
+
+    const formattedPayments = productPayments.map(investment => ({
+      id: investment.id,
+      cliente: `${investment.user.nombre} ${investment.user.apellido}`,
+      producto: investment.product.nombre,
+      monto_pagado: investment.monto_pagado,
+      monto_total: investment.monto_total,
+      cantidad: investment.cantidad_comprada,
+      unidad: investment.product.unidad,
+      comprobante_url: investment.comprobante_pago,
+      fecha_pago: investment.updatedAt,
+      pagado_completo: investment.pagado
+    }));
+
+    res.json(formattedPayments);
+  } catch (error) {
+    console.error('Error fetching product payments:', error);
+    res.status(500).json({ error: 'Error al obtener pagos de productos' });
+  }
+};
+
 // ADMIN: Corregir precios de inversiones existentes
 export const fixInvestmentPrices = async (req: AuthRequest, res: Response) => {
   try {
