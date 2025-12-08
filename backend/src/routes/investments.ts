@@ -1,5 +1,30 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
 import { authenticateToken } from '../middleware/auth';
+
+// Configuración de multer para comprobantes
+const receiptStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/receipts/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
+    cb(null, 'receipt_' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadReceipt = multer({ 
+  storage: receiptStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes'));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
 import {
   getProducts,
   buyProduct,
@@ -47,7 +72,7 @@ router.post('/buy', authenticateToken, buyProduct);
 router.get('/my-investments', authenticateToken, getUserInvestments);
 router.post('/report-sale', authenticateToken, reportSale);
 router.get('/dashboard', authenticateToken, getInvestmentDashboard);
-router.post('/pay-microcredit', authenticateToken, payMicrocredit);
+router.post('/pay-microcredit', authenticateToken, uploadReceipt.single('comprobante'), payMicrocredit);
 router.put('/update-price', authenticateToken, updateInvestmentPrice);
 
 // Rutas para admin - consignaciones
@@ -57,6 +82,6 @@ router.get('/paid-purchases', authenticateToken, getPaidPurchases);
 router.post('/approve-consignment', authenticateToken, approveConsignment);
 router.post('/reject-consignment', authenticateToken, rejectConsignment);
 router.post('/cancel-investment', authenticateToken, cancelInvestment);
-router.post('/fix-investment-prices', authenticateToken, fixInvestmentPrices);
+// router.post('/fix-investment-prices', authenticateToken, fixInvestmentPrices); // Endpoint temporal - ya no necesario
 
 export default router;

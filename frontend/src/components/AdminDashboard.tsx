@@ -101,33 +101,12 @@ const AdminDashboard: React.FC = () => {
             <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">Panel de Administración</h1>
             <p className="text-gray-600 text-lg">Gestiona tu plataforma de préstamos</p>
           </div>
-          <div className="flex gap-4">
-            <button
-              onClick={async () => {
-                try {
-                  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/fix-investment-prices`, {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                  });
-                  const result = await response.json();
-                  alert(`Corrección completada: ${result.message}`);
-                } catch (error) {
-                  alert('Error al corregir precios');
-                }
-              }}
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-6 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              🔧 Corregir Precios
-            </button>
-            <button
-              onClick={() => setIsUserModalOpen(true)}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-6 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              <FaPlusCircle className="mr-2 text-lg" /> Crear Usuario
-            </button>
-          </div>
+          <button
+            onClick={() => setIsUserModalOpen(true)}
+            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-6 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          >
+            <FaPlusCircle className="mr-2 text-lg" /> Crear Usuario
+          </button>
         </div>
       
         <div className="mb-10">

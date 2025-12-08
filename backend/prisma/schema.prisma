@@ -122,6 +122,8 @@ model Investment {
   pagado                 Boolean          @default(true)
   tipo_pago              PaymentType      @default(inmediato)
   precio_reventa_cliente Float?
+  monto_pagado           Float            @default(0)
+  comprobante_pago       String?
   product                Product          @relation(fields: [productId], references: [id])
   user                   User             @relation(fields: [userId], references: [id])
   salesReports           SalesReport[]

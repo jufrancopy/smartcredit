@@ -20,6 +20,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentQuantity, setPaymentQuantity] = useState('1');
   const [paymentMode, setPaymentMode] = useState<'amount' | 'quantity'>('quantity');
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [paymentReceiptPreview, setPaymentReceiptPreview] = useState<string>('');
   const queryClient = useQueryClient();
 
   const buyProduct = useBuyProduct({
@@ -627,30 +629,72 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
               )}
               
+              {/* Campo para comprobante */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comprobante de transferencia *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPaymentReceipt(file);
+                      const reader = new FileReader();
+                      reader.onload = (e) => {
+                        setPaymentReceiptPreview(e.target?.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                  required
+                />
+                {paymentReceiptPreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={paymentReceiptPreview} 
+                      alt="Preview" 
+                      className="w-32 h-32 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div className="space-y-3">
                 <button
                   onClick={async () => {
                     try {
+                      if (!paymentReceipt) {
+                        alert('Por favor sube el comprobante de transferencia');
+                        return;
+                      }
+                      
                       const finalAmount = paymentMode === 'quantity' 
                         ? payingInvestment.precio_unitario * (parseFloat(paymentQuantity) || 1)
                         : paymentAmount;
+                      
+                      const formData = new FormData();
+                      formData.append('investmentId', payingInvestment.id.toString());
+                      formData.append('monto', finalAmount.toString());
+                      formData.append('comprobante', paymentReceipt);
                         
                       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/pay-microcredit`, {
                         method: 'POST',
                         headers: {
-                          'Content-Type': 'application/json',
                           'Authorization': `Bearer ${localStorage.getItem('token')}`
                         },
-                        body: JSON.stringify({
-                          investmentId: payingInvestment.id,
-                          monto: finalAmount
-                        })
+                        body: formData
                       });
                       
                       if (response.ok) {
                         const result = await response.json();
                         toast.success(result.message);
                         setPayingInvestment(null);
+                        setPaymentReceipt(null);
+                        setPaymentReceiptPreview('');
                         queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
                         queryClient.invalidateQueries({ queryKey: ['user'] });
                         queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
@@ -663,9 +707,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     }
                   }}
                   disabled={
-                    paymentMode === 'quantity' 
+                    !paymentReceipt || 
+                    (paymentMode === 'quantity' 
                       ? (parseFloat(paymentQuantity) <= 0 || parseFloat(paymentQuantity) > payingInvestment.cantidad_restante)
-                      : (paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente)
+                      : (paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente))
                   }
                   className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
                 >
@@ -673,7 +718,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </button>
                 
                 <button
-                  onClick={() => setPayingInvestment(null)}
+                  onClick={() => {
+                    setPayingInvestment(null);
+                    setPaymentReceipt(null);
+                    setPaymentReceiptPreview('');
+                  }}
                   className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600"
                 >
                   Cancelar

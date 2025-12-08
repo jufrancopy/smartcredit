@@ -547,40 +547,37 @@ export const payMicrocredit = async (req: AuthRequest, res: Response) => {
   try {
     const { investmentId, monto } = req.body;
     const userId = req.userId!;
+    const comprobante = req.file;
 
     const investment = await prisma.investment.findFirst({
-      where: { id: investmentId, userId, tipo_pago: 'microcredito' }
+      where: { id: parseInt(investmentId), userId, tipo_pago: 'microcredito' }
     });
 
     if (!investment) return res.status(404).json({ error: 'Microcrédito no encontrado' });
 
     const saldoPendiente = investment.monto_total - investment.monto_pagado;
-    const montoPagar = monto || saldoPendiente;
+    const montoPagar = parseFloat(monto) || saldoPendiente;
 
     if (montoPagar > saldoPendiente) {
       return res.status(400).json({ error: 'Monto excede la deuda pendiente' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.fondo_acumulado < montoPagar) {
-      return res.status(400).json({ error: 'Fondos insuficientes' });
+    if (!comprobante) {
+      return res.status(400).json({ error: 'Comprobante de transferencia requerido' });
     }
 
     const nuevoMontoPagado = investment.monto_pagado + montoPagar;
     const esPagoCompleto = nuevoMontoPagado >= investment.monto_total;
+    const comprobanteUrl = `/uploads/receipts/${comprobante.filename}`;
 
     await prisma.$transaction(async (tx) => {
       await tx.investment.update({
-        where: { id: investmentId },
+        where: { id: parseInt(investmentId) },
         data: { 
           monto_pagado: nuevoMontoPagado,
-          pagado: esPagoCompleto
+          pagado: esPagoCompleto,
+          comprobante_pago: comprobanteUrl
         }
-      });
-
-      await tx.user.update({
-        where: { id: userId },
-        data: { fondo_acumulado: { decrement: montoPagar } }
       });
     });
 
