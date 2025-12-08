@@ -918,6 +918,7 @@ export const getProductPayments = async (req: AuthRequest, res: Response) => {
 
     const formattedPayments = productPayments.map(investment => ({
       id: investment.id,
+      investmentId: investment.id,
       cliente: `${investment.user.nombre} ${investment.user.apellido}`,
       producto: investment.product.nombre,
       monto_pagado: investment.monto_pagado,

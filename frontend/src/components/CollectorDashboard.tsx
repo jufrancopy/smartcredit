@@ -1187,7 +1187,8 @@ const CollectorDashboard: React.FC = () => {
                         fecha: payment.fecha_pago,
                         tipo: 'producto',
                         comision: 0, // Los productos no generan comisión al cobrador
-                        comprobante_url: payment.comprobante_url
+                        comprobante_url: payment.comprobante_url,
+                        investmentId: payment.investmentId
                       })) || [])
                     ]
                     ?.sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
@@ -1202,7 +1203,7 @@ const CollectorDashboard: React.FC = () => {
                             </div>
                             <div>
                               <p className="font-semibold text-slate-800">{payment.cliente}</p>
-                              <p className="text-xs text-slate-500">ID: {payment.loanId}</p>
+                              <p className="text-xs text-slate-500">ID: {payment.loanId || payment.investmentId}</p>
                             </div>
                           </div>
                         </td>
