@@ -234,19 +234,31 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     <span className="text-sm text-gray-500">Precio de compra:</span>
                     <span className="font-bold text-red-600">
                       {investmentStatus ? 
+                        investmentStatus.precio_unitario.toLocaleString('es-PY') : 
+                        product.precio_venta_sugerido.toLocaleString('es-PY')
+                      } Gs
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">
+                      {investmentStatus && investmentStatus.precio_reventa_cliente && 
+                       investmentStatus.precio_reventa_cliente !== investmentStatus.product.precio_venta_sugerido ? 
+                        'Nuevo Precio:' : 'Precio venta sugerido:'}
+                    </span>
+                    <span className="font-bold text-green-600">
+                      {investmentStatus ? 
                         (investmentStatus.precio_reventa_cliente || investmentStatus.product.precio_venta_sugerido).toLocaleString('es-PY') : 
                         product.precio_venta_sugerido.toLocaleString('es-PY')
                       } Gs
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Precio venta sugerido:</span>
-                    <span className="font-bold text-green-600">{product.precio_venta_sugerido.toLocaleString('es-PY')} Gs</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Tu ganancia mínima:</span>
+                    <span className="text-sm text-gray-500">Tu ganancia:</span>
                     <span className="font-bold text-purple-600">
-                      {(product.precio_venta_sugerido - product.precio_venta_sugerido).toLocaleString('es-PY')} Gs (0%)
+                      {investmentStatus ? 
+                        (((investmentStatus.precio_reventa_cliente || investmentStatus.product.precio_venta_sugerido) - investmentStatus.precio_unitario) * (investmentStatus.cantidad_restante || 0)).toLocaleString('es-PY') :
+                        '0'
+                      } Gs
                     </span>
                   </div>
                   <div className="flex justify-between">
