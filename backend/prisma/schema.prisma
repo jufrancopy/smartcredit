@@ -1,76 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id              Int      @id @default(autoincrement())
-  email           String?   @unique
-  password        String?
-  nombre          String
-  apellido        String
-  cedula          String   @unique
+  id               Int             @id @default(autoincrement())
+  email            String?         @unique
+  password         String?
+  nombre           String
+  apellido         String
+  cedula           String          @unique
   fecha_nacimiento DateTime
-  tipo_comercio   String
-  foto_url        String?
-  whatsapp        String   @unique
-  role            Role     @default(deudor)
-  loans           Loan[]
-  payments        Payment[]
-  riskEvents      RiskEvent[]
-  investments     Investment[]
-  salesReports    SalesReport[]
-  clientProducts  ClientProduct[]
-  createdAt       DateTime @default(now())
-  fondo_acumulado Float    @default(0)
-  tienda_slug     String?  @unique
-  tienda_nombre   String?
-  tienda_activa   Boolean  @default(false)
-  updatedAt       DateTime @updatedAt
+  tipo_comercio    String
+  foto_url         String?
+  whatsapp         String          @unique
+  role             Role            @default(deudor)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  fondo_acumulado  Float           @default(0)
+  tienda_activa    Boolean         @default(false)
+  tienda_nombre    String?
+  tienda_slug      String?         @unique
+  clientProducts   ClientProduct[]
+  investments      Investment[]
+  loans            Loan[]
+  payments         Payment[]
+  riskEvents       RiskEvent[]
+  salesReports     SalesReport[]
 }
 
 model Loan {
   id                    Int           @id @default(autoincrement())
-  user                  User          @relation(fields: [userId], references: [id])
   userId                Int
   monto_principal       Float
   interes_total_percent Float
   total_a_devolver      Float
   plazo_dias            Int
-  monto_diario          Float // Nuevo campo para el monto diario a pagar
   fecha_otorgado        DateTime
   fecha_inicio_cobro    DateTime
   estado                LoanStatus    @default(activo)
   riesgo_score          Float?
-  installments          Installment[]
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
+  monto_diario          Float
+  installments          Installment[]
+  user                  User          @relation(fields: [userId], references: [id])
 }
 
 model Installment {
-  id            Int             @id @default(autoincrement())
-  loan          Loan            @relation(fields: [loanId], references: [id])
-  loanId        Int
-  fecha         DateTime
+  id             Int               @id @default(autoincrement())
+  loanId         Int
+  fecha          DateTime
   monto_expected Float
-  monto_pagado  Float           @default(0)
-  status        InstallmentStatus @default(pendiente)
-  recibo_url    String?
-  cobrador_id   Int?
-  payments      Payment[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  monto_pagado   Float             @default(0)
+  status         InstallmentStatus @default(pendiente)
+  recibo_url     String?
+  cobrador_id    Int?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  loan           Loan              @relation(fields: [loanId], references: [id])
+  payments       Payment[]
 }
 
 model Payment {
   id              Int         @id @default(autoincrement())
-  installment     Installment @relation(fields: [installmentId], references: [id])
   installmentId   Int
-  user            User        @relation(fields: [userId], references: [id])
   userId          Int
   monto           Float
   comprobante_url String?
@@ -79,15 +77,87 @@ model Payment {
   comentario      String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  installment     Installment @relation(fields: [installmentId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
 }
 
 model RiskEvent {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  evento      String
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  evento       String
   score_impact Float
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id                    Int          @id @default(autoincrement())
+  nombre                String
+  descripcion           String?
+  categoria             String
+  precio_compra         Float
+  precio_venta_sugerido Float
+  unidad                String
+  cantidad_por_unidad   Float
+  imagen_url            String?
+  stock_disponible      Float        @default(0)
+  activo                Boolean      @default(true)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  investments           Investment[]
+}
+
+model Investment {
+  id                     Int              @id @default(autoincrement())
+  userId                 Int
+  productId              Int
+  cantidad_comprada      Float
+  precio_unitario        Float
+  monto_total            Float
+  fecha_compra           DateTime         @default(now())
+  estado                 InvestmentStatus @default(activo)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  fecha_limite_pago      DateTime?
+  pagado                 Boolean          @default(true)
+  tipo_pago              PaymentType      @default(inmediato)
+  precio_reventa_cliente Float?
+  product                Product          @relation(fields: [productId], references: [id])
+  user                   User             @relation(fields: [userId], references: [id])
+  salesReports           SalesReport[]
+}
+
+model SalesReport {
+  id                Int        @id @default(autoincrement())
+  userId            Int
+  investmentId      Int
+  cantidad_vendida  Float
+  precio_venta      Float
+  monto_total_venta Float
+  ganancia_generada Float
+  fecha_venta       DateTime
+  comprobante_url   String?
+  verificado        Boolean    @default(false)
+  verificado_por    Int?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  investment        Investment @relation(fields: [investmentId], references: [id])
+  user              User       @relation(fields: [userId], references: [id])
+}
+
+model ClientProduct {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  nombre      String
+  descripcion String?
+  categoria   String
+  precio      Float
+  stock       Float    @default(0)
+  imagen_url  String?
+  activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 enum Role {
@@ -110,62 +180,6 @@ enum InstallmentStatus {
   vencido
 }
 
-model Product {
-  id                Int          @id @default(autoincrement())
-  nombre            String
-  descripcion       String?
-  categoria         String
-  precio_compra     Float        // Lo que paga SmartCredit
-  precio_venta_sugerido Float    // Precio sugerido para el cliente
-  unidad            String       // "caja", "maple", "kg", etc.
-  cantidad_por_unidad Float      // Ej: 12 leches por caja, 1.0 para kg
-  imagen_url        String?
-  stock_disponible  Float        @default(0)
-  activo            Boolean      @default(true)
-  investments       Investment[]
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-}
-
-model Investment {
-  id                Int          @id @default(autoincrement())
-  user              User         @relation(fields: [userId], references: [id])
-  userId            Int
-  product           Product      @relation(fields: [productId], references: [id])
-  productId         Int
-  cantidad_comprada Float        // Soporta decimales para kg, litros, etc.
-  precio_unitario   Float        // Precio al momento de la compra
-  precio_reventa_cliente Float?   // Precio personalizado del cliente para reventa
-  monto_total       Float        // cantidad * precio_unitario
-  monto_pagado      Float        @default(0) // Monto pagado parcialmente
-  fecha_compra      DateTime     @default(now())
-  estado            InvestmentStatus @default(activo)
-  tipo_pago         PaymentType  @default(inmediato)
-  fecha_limite_pago DateTime?    // Para microcréditos
-  pagado            Boolean      @default(true)
-  salesReports      SalesReport[]
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-}
-
-model SalesReport {
-  id                Int        @id @default(autoincrement())
-  user              User       @relation(fields: [userId], references: [id])
-  userId            Int
-  investment        Investment @relation(fields: [investmentId], references: [id])
-  investmentId      Int
-  cantidad_vendida  Float      // Soporta decimales para kg, litros, etc.
-  precio_venta      Float      // Precio al que vendió el cliente
-  monto_total_venta Float      // cantidad * precio_venta
-  ganancia_generada Float      // monto_total_venta - (cantidad * precio_compra_original)
-  fecha_venta       DateTime
-  comprobante_url   String?    // Foto del comprobante de venta
-  verificado        Boolean    @default(false)
-  verificado_por    Int?       // ID del admin que verificó
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-}
-
 enum InvestmentStatus {
   activo
   vendido_parcial
@@ -176,19 +190,4 @@ enum InvestmentStatus {
 enum PaymentType {
   inmediato
   microcredito
-}
-
-model ClientProduct {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  nombre      String
-  descripcion String?
-  categoria   String
-  precio      Float
-  stock       Float    @default(0)  // Soporta decimales para kg, litros, etc.
-  imagen_url  String?
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }

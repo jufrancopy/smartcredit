@@ -16,6 +16,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const [precioReventa, setPrecioReventa] = useState(0);
   const [editingInvestment, setEditingInvestment] = useState<any>(null);
   const [newPrice, setNewPrice] = useState(0);
+  const [payingInvestment, setPayingInvestment] = useState<any>(null);
+  const [paymentAmount, setPaymentAmount] = useState(0);
   const queryClient = useQueryClient();
 
   const buyProduct = useBuyProduct({
@@ -104,11 +106,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
                       </span>
                     </div>
-                    {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
+                    {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
                       <div className="flex justify-between">
                         <span>Saldo pendiente:</span>
                         <span className="font-semibold text-red-600">
-                          {investment.saldo_pendiente.toLocaleString('es-PY')} Gs
+                          {(investment.monto_total - (investment.monto_pagado || 0)).toLocaleString('es-PY')} Gs
                         </span>
                       </div>
                     )}
@@ -124,11 +126,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     >
                       ✏️ Editar Precio
                     </button>
-                    {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
+                    {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
                       <button
                         onClick={() => {
-                          // TODO: Abrir modal de pago parcial
-                          console.log('Pagar consignación:', investment.id);
+                          const saldoPendiente = investment.monto_total - (investment.monto_pagado || 0);
+                          setPayingInvestment({...investment, saldo_pendiente: saldoPendiente});
+                          setPaymentAmount(saldoPendiente);
                         }}
                         className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
                       >
@@ -439,6 +442,120 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
                 >
                   Actualizar Precio
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal para pago parcial de consignación */}
+      {payingInvestment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Pagar Consignación</h3>
+              <button onClick={() => setPayingInvestment(null)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800">{payingInvestment.product.nombre}</h4>
+                <p className="text-sm text-gray-600">{payingInvestment.cantidad_comprada} {payingInvestment.product.unidad}s</p>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex justify-between mb-2">
+                  <span>Monto total:</span>
+                  <span className="font-bold">{payingInvestment.monto_total.toLocaleString('es-PY')} Gs</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span>Ya pagado:</span>
+                  <span className="font-bold text-green-600">{(payingInvestment.monto_total - payingInvestment.saldo_pendiente).toLocaleString('es-PY')} Gs</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Saldo pendiente:</span>
+                  <span className="text-red-600">{payingInvestment.saldo_pendiente.toLocaleString('es-PY')} Gs</span>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Monto a pagar
+                </label>
+                <input
+                  type="text"
+                  value={paymentAmount === 0 ? '' : paymentAmount.toLocaleString('es-PY')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setPaymentAmount(value ? parseInt(value) : 0);
+                  }}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Ingrese monto"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Máximo: {payingInvestment.saldo_pendiente.toLocaleString('es-PY')} Gs
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setPaymentAmount(payingInvestment.saldo_pendiente)}
+                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-blue-700 text-sm"
+                >
+                  Pagar Todo
+                </button>
+                <button
+                  onClick={() => setPaymentAmount(Math.floor(payingInvestment.saldo_pendiente / 2))}
+                  className="flex-1 bg-gray-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-gray-700 text-sm"
+                >
+                  Pagar Mitad
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/pay-microcredit`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                          investmentId: payingInvestment.id,
+                          monto: paymentAmount
+                        })
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        toast.success(result.message);
+                        setPayingInvestment(null);
+                        queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
+                        queryClient.invalidateQueries({ queryKey: ['user'] });
+                      } else {
+                        const error = await response.json();
+                        throw new Error(error.error);
+                      }
+                    } catch (error: any) {
+                      toast.error(error.message);
+                    }
+                  }}
+                  disabled={paymentAmount <= 0 || paymentAmount > payingInvestment.saldo_pendiente}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
+                >
+                  💰 Confirmar Pago
+                </button>
+                
+                <button
+                  onClick={() => setPayingInvestment(null)}
+                  className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600"
+                >
+                  Cancelar
                 </button>
               </div>
             </div>

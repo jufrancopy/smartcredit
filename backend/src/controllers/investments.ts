@@ -381,12 +381,22 @@ export const getClientProducts = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
-    // Obtener inversiones activas del cliente con productos SmartCredit (solo las pagadas/aprobadas)
+    // Obtener inversiones activas del cliente con productos SmartCredit 
+    // (pagadas completamente O aprobadas con saldo pendiente)
     const investments = await prisma.investment.findMany({
       where: { 
         userId: client.id,
         estado: { in: ['activo', 'vendido_parcial'] },
-        pagado: true // Solo mostrar productos aprobados/pagados
+        OR: [
+          { pagado: true }, // Productos pagados completamente
+          { 
+            AND: [
+              { tipo_pago: 'microcredito' }, // Consignaciones
+              { pagado: false }, // Con saldo pendiente
+              { fecha_limite_pago: null } // null = aprobada por cobrador
+            ]
+          }
+        ]
       },
       include: {
         product: true,
@@ -582,7 +592,7 @@ export const payMicrocredit = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ADMIN/COBRADOR: Obtener consignaciones pendientes
+// ADMIN/COBRADOR: Obtener consignaciones pendientes (no aprobadas aún)
 export const getPendingConsignments = async (req: AuthRequest, res: Response) => {
   try {
     if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
@@ -590,7 +600,11 @@ export const getPendingConsignments = async (req: AuthRequest, res: Response) =>
     }
 
     const pendingInvestments = await prisma.investment.findMany({
-      where: { pagado: false },
+      where: { 
+        pagado: false,
+        tipo_pago: 'microcredito',
+        fecha_limite_pago: { not: null } // Tiene fecha límite = pendiente de aprobación
+      },
       include: {
         user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
         product: true
@@ -642,12 +656,16 @@ export const approveConsignment = async (req: AuthRequest, res: Response) => {
 
     const { investmentId } = req.body;
 
-    const investment = await prisma.investment.update({
+    // Aprobar consignación: quitar fecha_limite_pago para indicar que está aprobada
+    const updatedInvestment = await prisma.investment.update({
       where: { id: investmentId },
-      data: { pagado: true }
+      data: { 
+        fecha_limite_pago: null // null = aprobada, con fecha = pendiente
+        // pagado sigue siendo false hasta que cliente pague
+      }
     });
 
-    res.json({ message: 'Consignación aprobada', investment });
+    res.json({ message: 'Consignación aprobada', investment: updatedInvestment });
   } catch (error) {
     console.error('Error approving consignment:', error);
     res.status(500).json({ error: 'Error al aprobar consignación' });
