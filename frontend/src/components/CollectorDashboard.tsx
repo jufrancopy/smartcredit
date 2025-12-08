@@ -452,6 +452,223 @@ const ElegantPaymentCalendar: React.FC<ElegantPaymentCalendarProps> = ({
     </div>
   );
 };
+// Componente para las pestañas de historial
+interface HistoryTabsProps {
+  loans: any[];
+  productPayments: any[];
+  accumulatedEarnings: number;
+  COLLECTOR_PROFIT_PERCENTAGE: number;
+}
+
+const HistoryTabs: React.FC<HistoryTabsProps> = ({ loans, productPayments, accumulatedEarnings, COLLECTOR_PROFIT_PERCENTAGE }) => {
+  const [activeHistoryTab, setActiveHistoryTab] = useState('creditos');
+  
+  return (
+    <>
+      {/* Sub-pestañas */}
+      <div className="mb-8">
+        <div className="bg-slate-50 rounded-2xl p-2">
+          <nav className="flex space-x-2" aria-label="History Tabs">
+            <button
+              onClick={() => setActiveHistoryTab('creditos')}
+              className={`${
+                activeHistoryTab === 'creditos'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2`}
+            >
+              <span>💳</span> Pagos Créditos
+            </button>
+            <button
+              onClick={() => setActiveHistoryTab('productos')}
+              className={`${
+                activeHistoryTab === 'productos'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2`}
+            >
+              <span>📦</span> Pagos Productos
+            </button>
+          </nav>
+        </div>
+      </div>
+      
+      {/* Contenido según pestaña activa */}
+      {activeHistoryTab === 'creditos' && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Cliente</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Cuota</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Monto</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Fecha Pago</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Estado</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Comisión</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loans?.flatMap((loan: any) => 
+                loan.installments.flatMap((installment: any, index: number) => 
+                  installment.payments
+                    ?.filter((payment: any) => payment.confirmado)
+                    ?.map((payment: any) => (
+                      <tr key={`loan-${payment.id}`} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
+                              <span className="text-white font-bold text-sm">
+                                {loan.user.nombre.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">{loan.user.nombre} {loan.user.apellido}</p>
+                              <p className="text-xs text-slate-500">ID: {loan.id}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                            Cuota #{index + 1}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-bold text-lg text-slate-800">
+                            {payment.monto.toLocaleString('es-PY')} Gs
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div>
+                            <p className="font-medium text-slate-800">
+                              {new Date(payment.createdAt).toLocaleDateString('es-ES')}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {new Date(payment.createdAt).toLocaleTimeString('es-ES', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
+                            ✅ Confirmado
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-bold text-emerald-600">
+                            +{Math.round(payment.monto * COLLECTOR_PROFIT_PERCENTAGE).toLocaleString('es-PY')} Gs
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                )
+              ) || (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center">
+                    <div className="text-slate-400">
+                      <div className="text-4xl mb-4">💳</div>
+                      <p className="text-lg font-medium">No hay pagos de créditos</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      
+      {activeHistoryTab === 'productos' && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Cliente</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Producto</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Monto</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Fecha Pago</th>
+                <th className="text-left py-4 px-6 font-semibold text-slate-700">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productPayments?.map((payment: any) => (
+                <tr key={`product-${payment.id}`} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td className="py-4 px-6">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-white font-bold text-sm">
+                          {payment.cliente.split(' ')[0].charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800">{payment.cliente}</p>
+                        <p className="text-xs text-slate-500">ID: {payment.id}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                      {payment.producto} ({payment.cantidad} {payment.unidad}s)
+                    </span>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="font-bold text-lg text-slate-800">
+                      {payment.monto_pagado.toLocaleString('es-PY')} Gs
+                    </span>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div>
+                      <p className="font-medium text-slate-800">
+                        {new Date(payment.fecha_pago).toLocaleDateString('es-ES')}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(payment.fecha_pago).toLocaleTimeString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
+                      ✅ Confirmado
+                    </span>
+                  </td>
+                </tr>
+              )) || (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center">
+                    <div className="text-slate-400">
+                      <div className="text-4xl mb-4">📦</div>
+                      <p className="text-lg font-medium">No hay pagos de productos</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      
+      {/* Resumen de comisiones */}
+      <div className="mt-8 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-emerald-800">💰 Total Comisiones Ganadas</h3>
+            <p className="text-emerald-600">5% de cada pago de crédito confirmado</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-emerald-700">
+              {Math.round(accumulatedEarnings).toLocaleString('es-PY')} Gs
+            </p>
+            <p className="text-sm text-emerald-600">Acumulado total</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // Componente para las pestañas de préstamos
 interface LoanTabsProps {
   debtors: Debtor[];
@@ -1145,136 +1362,14 @@ const CollectorDashboard: React.FC = () => {
                 </div>
               </div>
               
-              {/* Tabla de pagos */}
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Cliente</th>
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Cuota</th>
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Monto</th>
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Fecha Pago</th>
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Estado</th>
-                      <th className="text-left py-4 px-6 font-semibold text-slate-700">Comisión</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Combinar pagos de préstamos y productos */}
-                    {[
-                      // Pagos de préstamos
-                      ...(loans?.flatMap((loan: any) => 
-                        loan.installments.flatMap((installment: any) => 
-                          installment.payments
-                            ?.filter((payment: any) => payment.confirmado)
-                            ?.map((payment: any) => ({
-                              id: `loan-${payment.id}`,
-                              cliente: `${loan.user.nombre} ${loan.user.apellido}`,
-                              concepto: `Cuota #${installment.numero_cuota}`,
-                              monto: payment.monto,
-                              fecha: payment.createdAt,
-                              tipo: 'prestamo',
-                              loanId: loan.id,
-                              comision: payment.monto * COLLECTOR_PROFIT_PERCENTAGE
-                            }))
-                        )
-                      ) || []),
-                      // Pagos de productos
-                      ...(productPayments?.map((payment: any) => ({
-                        id: `product-${payment.id}`,
-                        cliente: payment.cliente,
-                        concepto: `${payment.producto} (${payment.cantidad} ${payment.unidad}s)`,
-                        monto: payment.monto_pagado,
-                        fecha: payment.fecha_pago,
-                        tipo: 'producto',
-                        comision: 0, // Los productos no generan comisión al cobrador
-                        comprobante_url: payment.comprobante_url,
-                        investmentId: payment.investmentId
-                      })) || [])
-                    ]
-                    ?.sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-                    ?.map((payment: any) => (
-                      <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-white font-bold text-sm">
-                                {payment.cliente.split(' ')[0].charAt(0)}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-800">{payment.cliente}</p>
-                              <p className="text-xs text-slate-500">ID: {payment.loanId || payment.investmentId}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            payment.tipo === 'prestamo' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-purple-100 text-purple-800'
-                          }`}>
-                            {payment.concepto}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="font-bold text-lg text-slate-800">
-                            {payment.monto.toLocaleString('es-PY')} Gs
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div>
-                            <p className="font-medium text-slate-800">
-                              {new Date(payment.fecha).toLocaleDateString('es-ES')}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {new Date(payment.fecha).toLocaleTimeString('es-ES', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
-                            ✅ Confirmado
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="font-bold text-emerald-600">
-                            +{Math.round(payment.comision).toLocaleString('es-PY')} Gs
-                          </span>
-                        </td>
-                      </tr>
-                    )) || (
-                      <tr>
-                        <td colSpan={6} className="py-12 text-center">
-                          <div className="text-slate-400">
-                            <div className="text-4xl mb-4">📊</div>
-                            <p className="text-lg font-medium">No hay pagos confirmados</p>
-                            <p className="text-sm">Los pagos aparecerán aquí una vez confirmados</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Resumen de comisiones */}
-              <div className="mt-8 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-emerald-800">💰 Total Comisiones Ganadas</h3>
-                    <p className="text-emerald-600">5% de cada pago confirmado</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-emerald-700">
-                      {Math.round(accumulatedEarnings).toLocaleString('es-PY')} Gs
-                    </p>
-                    <p className="text-sm text-emerald-600">Acumulado total</p>
-                  </div>
-                </div>
-              </div>
+              {/* Sub-pestañas para historial */}
+              <HistoryTabs 
+                loans={loans}
+                productPayments={productPayments}
+                accumulatedEarnings={accumulatedEarnings}
+                COLLECTOR_PROFIT_PERCENTAGE={COLLECTOR_PROFIT_PERCENTAGE}
+              />
+
             </div>
           )}
 
