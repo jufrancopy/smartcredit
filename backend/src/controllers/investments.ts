@@ -846,3 +846,49 @@ export const cancelInvestment = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error al cancelar compra' });
   }
 };
+
+// ADMIN: Corregir precios de inversiones existentes
+export const fixInvestmentPrices = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Obtener inversiones que necesitan corrección
+      const investments = await tx.investment.findMany({
+        include: { product: true }
+      });
+
+      let corrected = 0;
+      
+      for (const investment of investments) {
+        // Si el precio_unitario es igual al precio_compra del producto, corregir
+        if (investment.precio_unitario === investment.product.precio_compra) {
+          const newPrecioUnitario = investment.product.precio_venta_sugerido;
+          const newMontoTotal = investment.cantidad_comprada * newPrecioUnitario;
+          
+          await tx.investment.update({
+            where: { id: investment.id },
+            data: {
+              precio_unitario: newPrecioUnitario,
+              monto_total: newMontoTotal
+            }
+          });
+          
+          corrected++;
+        }
+      }
+      
+      return corrected;
+    });
+
+    res.json({ 
+      message: `Se corrigieron ${result} inversiones`,
+      corrected: result
+    });
+  } catch (error) {
+    console.error('Error fixing investment prices:', error);
+    res.status(500).json({ error: 'Error al corregir precios' });
+  }
+};

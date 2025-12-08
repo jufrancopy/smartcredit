@@ -20,7 +20,8 @@ import {
   approveConsignment,
   rejectConsignment,
   updateInvestmentPrice,
-  cancelInvestment
+  cancelInvestment,
+  fixInvestmentPrices
 } from '../controllers/investments';
 
 const router = express.Router();
@@ -56,5 +57,6 @@ router.get('/paid-purchases', authenticateToken, getPaidPurchases);
 router.post('/approve-consignment', authenticateToken, approveConsignment);
 router.post('/reject-consignment', authenticateToken, rejectConsignment);
 router.post('/cancel-investment', authenticateToken, cancelInvestment);
+router.post('/fix-investment-prices', authenticateToken, fixInvestmentPrices);
 
 export default router;

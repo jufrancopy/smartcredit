@@ -209,16 +209,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Precio de compra:</span>
-                    <span className="font-bold text-red-600">{product.precio_compra.toLocaleString('es-PY')} Gs</span>
+                    <span className="font-bold text-red-600">{product.precio_venta_sugerido.toLocaleString('es-PY')} Gs</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Precio venta sugerido:</span>
                     <span className="font-bold text-green-600">{product.precio_venta_sugerido.toLocaleString('es-PY')} Gs</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Ganancia potencial:</span>
+                    <span className="text-sm text-gray-500">Tu ganancia mínima:</span>
                     <span className="font-bold text-purple-600">
-                      {product.ganancia_potencial.toLocaleString('es-PY')} Gs ({product.margen_porcentaje}%)
+                      0 Gs (0%)
                     </span>
                   </div>
                   <div className="flex justify-between">
