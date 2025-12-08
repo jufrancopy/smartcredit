@@ -273,7 +273,19 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   min="1"
                   max={selectedProduct.stock_disponible}
                   value={cantidad}
-                  onChange={(e) => setCantidad(parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || value === '0') {
+                      setCantidad(0);
+                    } else {
+                      setCantidad(parseInt(value) || 0);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (cantidad === 0 || !e.target.value) {
+                      setCantidad(1);
+                    }
+                  }}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
