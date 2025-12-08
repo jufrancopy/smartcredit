@@ -406,14 +406,17 @@ export const getClientProducts = async (req: Request, res: Response) => {
       }
     });
 
-    // Productos de SmartCredit disponibles
+    // Productos de SmartCredit disponibles (solo los que tienen stock)
     const smartCreditProducts = investments.map(investment => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + Number(sale.cantidad_vendida), 0);
       const cantidadDisponible = Number(investment.cantidad_comprada) - totalVendido;
       
+      // Si está pagado completamente y no hay reportes de venta, asumir que se vendió todo
+      const realCantidadDisponible = (investment.pagado && totalVendido === 0) ? 0 : cantidadDisponible;
+      
       return {
         ...investment.product,
-        cantidad_disponible: cantidadDisponible,
+        cantidad_disponible: realCantidadDisponible,
         precio_cliente: investment.precio_reventa_cliente || investment.product.precio_venta_sugerido,
         investment_id: investment.id,
         tipo: 'smartcredit'
