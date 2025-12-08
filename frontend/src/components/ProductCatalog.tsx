@@ -165,7 +165,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         <button
                           onClick={() => {
                             const cantidadRestante = investmentStatus.cantidad_comprada - (investmentStatus.cantidad_vendida || 0);
-                            setPayingInvestment({...investmentStatus, cantidad_restante: cantidadRestante});
+                            setPayingInvestment({
+                              ...investmentStatus, 
+                              cantidad_restante: cantidadRestante,
+                              precio_unitario: investmentStatus.product.precio_venta_sugerido // Usar precio correcto
+                            });
                             setPaymentAmount(investmentStatus.saldo_pendiente);
                             setPaymentQuantity('1');
                             setPaymentMode('quantity');
@@ -237,7 +241,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Tu ganancia mínima:</span>
                     <span className="font-bold text-purple-600">
-                      0 Gs (0%)
+                      {(product.precio_venta_sugerido - product.precio_venta_sugerido).toLocaleString('es-PY')} Gs (0%)
                     </span>
                   </div>
                   <div className="flex justify-between">
