@@ -3,9 +3,6 @@ import { useGetCollectorStores } from '../queries';
 
 const StoreMonitor: React.FC = () => {
   const { data: stores, isLoading, error } = useGetCollectorStores();
-  
-  // Debug: mostrar datos recibidos
-  console.log('StoreMonitor - Datos recibidos:', stores);
 
   if (isLoading) {
     return (

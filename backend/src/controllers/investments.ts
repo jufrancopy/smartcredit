@@ -486,7 +486,7 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
         .sort((a, b) => new Date(b.fecha_venta || b.createdAt || 0).getTime() - new Date(a.fecha_venta || a.createdAt || 0).getTime())
         .slice(0, 3);
 
-      const storeData = {
+      return {
         cliente: {
           id: client.id,
           nombre: `${client.nombre} ${client.apellido}`,
@@ -500,11 +500,6 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
         },
         ventas_recientes: recentSales
       };
-      
-      // Debug: mostrar datos calculados
-      console.log(`Tienda ${client.nombre}: Inversiones=${totalInvestments}, Ventas=${totalSales}, Reportes=${allSalesReports.length}`);
-      
-      return storeData;
     });
 
     res.json(storesData);
@@ -596,14 +591,44 @@ export const payMicrocredit = async (req: AuthRequest, res: Response) => {
     const comprobanteUrl = `/uploads/receipts/${comprobante.filename}`;
 
     await prisma.$transaction(async (tx) => {
+      // Actualizar inversión
       await tx.investment.update({
         where: { id: parseInt(investmentId) },
         data: { 
           monto_pagado: nuevoMontoPagado,
           pagado: esPagoCompleto,
-          comprobante_pago: comprobanteUrl
+          comprobante_pago: comprobanteUrl,
+          estado: esPagoCompleto ? 'vendido_completo' : investment.estado
         }
       });
+
+      // Si pago completo, crear reporte de venta automático
+      if (esPagoCompleto) {
+        const precioVenta = investment.precio_reventa_cliente || investment.precio_unitario;
+        const montoTotalVenta = Number(investment.cantidad_comprada) * precioVenta;
+        const gananciaGenerada = montoTotalVenta - investment.monto_total;
+
+        await tx.salesReport.create({
+          data: {
+            userId,
+            investmentId: parseInt(investmentId),
+            cantidad_vendida: investment.cantidad_comprada,
+            precio_venta: precioVenta,
+            monto_total_venta: montoTotalVenta,
+            ganancia_generada: gananciaGenerada,
+            fecha_venta: new Date(),
+            verificado: true // Auto-verificado por pago completo
+          }
+        });
+
+        // Agregar ganancia al fondo del usuario
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            fondo_acumulado: { increment: gananciaGenerada }
+          }
+        });
+      }
     });
 
     res.json({ 
