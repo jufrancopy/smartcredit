@@ -3,6 +3,75 @@ import { useGetProducts, useCreateProduct, useUpdateProduct, useUpdateStock, use
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
+// Componente para seleccionar categorías
+const CategorySelector: React.FC<{ defaultValue?: string }> = ({ defaultValue }) => {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [showInput, setShowInput] = useState(false);
+  const [inputValue, setInputValue] = useState(defaultValue || '');
+  
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/products`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+      .then(res => res.json())
+      .then(products => {
+        if (Array.isArray(products)) {
+          const cats = [...new Set(products.map((p: any) => p.categoria).filter(Boolean))];
+          setCategories(cats);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  
+  return (
+    <div>
+      {!showInput ? (
+        <div className="flex gap-2">
+          <select 
+            name="categoria" 
+            value={inputValue} 
+            onChange={(e) => setInputValue(e.target.value)}
+            className="flex-1 p-3 border rounded-lg" 
+            required
+          >
+            <option value="">Seleccionar categoría</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setShowInput(true)}
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+          >
+            + Nueva
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <input 
+            name="categoria" 
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Nueva categoría" 
+            className="flex-1 p-3 border rounded-lg" 
+            required 
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => setShowInput(false)}
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Componente para seleccionar imágenes existentes
 const ExistingImageSelector: React.FC<{ onSelect: (imageUrl: string) => void; currentImage?: string }> = ({ onSelect, currentImage }) => {
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -373,7 +442,7 @@ const ProductManager: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <input name="nombre" defaultValue={editingProduct?.nombre} placeholder="Nombre" className="w-full p-3 border rounded-lg" required />
               <textarea name="descripcion" defaultValue={editingProduct?.descripcion} placeholder="Descripción" className="w-full p-3 border rounded-lg" required />
-              <input name="categoria" defaultValue={editingProduct?.categoria} placeholder="Categoría" className="w-full p-3 border rounded-lg" required />
+              <CategorySelector defaultValue={editingProduct?.categoria} />
               
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Imagen del producto</label>
