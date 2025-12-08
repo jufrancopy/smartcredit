@@ -133,7 +133,7 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
 
     // Mostrar todas las inversiones (aprobadas y pendientes)
     const investmentsWithStats = investments.map(investment => {
-      const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
+      const totalVendido = investment.salesReports.reduce((sum, sale) => sum + Number(sale.cantidad_vendida), 0);
       const gananciasGeneradas = investment.salesReports.reduce((sum, sale) => sum + sale.ganancia_generada, 0);
       const cantidadRestante = Number(investment.cantidad_comprada) - totalVendido;
       const saldoPendiente = investment.monto_total - investment.monto_pagado;
@@ -174,7 +174,7 @@ export const reportSale = async (req: AuthRequest, res: Response) => {
     }
 
     // Verificar que no venda más de lo que compró
-    const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
+    const totalVendido = investment.salesReports.reduce((sum, sale) => sum + Number(sale.cantidad_vendida), 0);
     if (totalVendido + cantidad_vendida > investment.cantidad_comprada) {
       return res.status(400).json({ error: 'No puedes vender más de lo que compraste' });
     }
@@ -408,7 +408,7 @@ export const getClientProducts = async (req: Request, res: Response) => {
 
     // Productos de SmartCredit disponibles
     const smartCreditProducts = investments.map(investment => {
-      const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
+      const totalVendido = investment.salesReports.reduce((sum, sale) => sum + Number(sale.cantidad_vendida), 0);
       const cantidadDisponible = Number(investment.cantidad_comprada) - totalVendido;
       
       return {
