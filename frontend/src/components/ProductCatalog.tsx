@@ -89,9 +89,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   <div className="flex justify-between items-start mb-2">
                     <h5 className="font-semibold text-gray-800">{investment.product.nombre}</h5>
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      investment.pagado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      investment.esta_aprobado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {investment.pagado ? 'Aprobado' : 'Pendiente de Aprobación'}
+                      {investment.esta_aprobado ? 'Aprobado' : 'Pendiente de Aprobación'}
                     </span>
                   </div>
                   
@@ -100,19 +100,23 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                       <span>Cantidad disponible:</span>
                       <span className="font-semibold">{cantidadRestante} {investment.product.unidad}s</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Mi precio actual:</span>
-                      <span className="font-semibold text-green-600">
-                        {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
-                      </span>
-                    </div>
-                    {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
-                      <div className="flex justify-between">
-                        <span>Saldo pendiente:</span>
-                        <span className="font-semibold text-red-600">
-                          {(investment.monto_total - (investment.monto_pagado || 0)).toLocaleString('es-PY')} Gs
-                        </span>
-                      </div>
+                    {investment.esta_aprobado && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Mi precio actual:</span>
+                          <span className="font-semibold text-green-600">
+                            {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
+                          </span>
+                        </div>
+                        {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
+                          <div className="flex justify-between">
+                            <span>Saldo pendiente:</span>
+                            <span className="font-semibold text-red-600">
+                              {(investment.monto_total - (investment.monto_pagado || 0)).toLocaleString('es-PY')} Gs
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                   
