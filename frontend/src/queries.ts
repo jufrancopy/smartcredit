@@ -850,7 +850,7 @@ export const useRequestRestock = (options?: UseMutationOptions<any, Error, any>)
 };
 
 // Get restock requests
-export const useGetRestockRequests = (enabled: boolean = true) => {
+export const useGetRestockRequests = () => {
   return useQuery({
     queryKey: ['restock-requests'],
     queryFn: async () => {
@@ -860,7 +860,8 @@ export const useGetRestockRequests = (enabled: boolean = true) => {
       }
       return res.json();
     },
-    enabled: enabled && !!localStorage.getItem('token')
+    retry: false,
+    refetchOnWindowFocus: false
   });
 };
 
