@@ -771,3 +771,49 @@ export const updateInvestmentPrice = async (req: AuthRequest, res: Response) => 
     res.status(500).json({ error: 'Error al actualizar precio' });
   }
 };
+
+// ADMIN/COBRADOR: Cancelar compra
+export const cancelInvestment = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { investmentId } = req.body;
+
+    await prisma.$transaction(async (tx) => {
+      const investment = await tx.investment.findUnique({
+        where: { id: investmentId },
+        include: { user: true, product: true }
+      });
+
+      if (!investment) {
+        throw new Error('Inversión no encontrada');
+      }
+
+      // Restaurar stock del producto
+      await tx.product.update({
+        where: { id: investment.productId },
+        data: { stock_disponible: { increment: investment.cantidad_comprada } }
+      });
+
+      // Devolver fondos si fue pago inmediato
+      if (investment.tipo_pago === 'inmediato' || investment.monto_pagado > 0) {
+        await tx.user.update({
+          where: { id: investment.userId },
+          data: { fondo_acumulado: { increment: investment.monto_pagado } }
+        });
+      }
+
+      // Eliminar la inversión
+      await tx.investment.delete({
+        where: { id: investmentId }
+      });
+    });
+
+    res.json({ message: 'Compra cancelada exitosamente' });
+  } catch (error) {
+    console.error('Error canceling investment:', error);
+    res.status(500).json({ error: 'Error al cancelar compra' });
+  }
+};

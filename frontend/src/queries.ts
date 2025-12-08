@@ -381,6 +381,28 @@ export const useRejectConsignment = (options?: UseMutationOptions<any, Error, an
   });
 };
 
+// Cancel investment
+export const useCancelInvestment = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { investmentId: number }) => {
+      const res = await fetch(`${API_URL}/investments/cancel-investment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al cancelar compra');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
 // Client Products
 export const useGetClientProducts = () => {
   return useQuery({

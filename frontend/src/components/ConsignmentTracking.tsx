@@ -1,8 +1,24 @@
-import React from 'react';
-import { useGetApprovedConsignments } from '../queries';
+import React, { useState } from 'react';
+import { useGetApprovedConsignments, useCancelInvestment } from '../queries';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 const ConsignmentTracking: React.FC = () => {
   const { data: approvedConsignments, isLoading, error } = useGetApprovedConsignments();
+  const [confirmCancel, setConfirmCancel] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  
+  const cancelInvestment = useCancelInvestment({
+    onSuccess: () => {
+      toast.success('Compra cancelada exitosamente');
+      setConfirmCancel(null);
+      queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
 
   if (isLoading) {
     return (
@@ -94,14 +110,51 @@ const ConsignmentTracking: React.FC = () => {
                 </div>
               </div>
               
-              <div className="text-xs text-gray-500">
-                Aprobado: {new Date(investment.createdAt).toLocaleDateString('es-PY')}
+              <div className="flex justify-between items-center">
+                <div className="text-xs text-gray-500">
+                  Aprobado: {new Date(investment.createdAt).toLocaleDateString('es-PY')}
+                </div>
+                <button
+                  onClick={() => setConfirmCancel(investment.id)}
+                  className="text-red-600 hover:text-red-800 text-xs font-semibold"
+                >
+                  ❌ Cancelar
+                </button>
               </div>
             </div>
           </div>
         );
       })}
     </div>
+    
+    {/* Modal de confirmación */}
+    {confirmCancel && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">⚠️ Cancelar Compra</h3>
+          <p className="text-gray-600 mb-6">
+            Esta acción restaurará el stock y devolverá los fondos pagados al cliente.
+            ¿Estás seguro?
+          </p>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setConfirmCancel(null)}
+              className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => cancelInvestment.mutate({ investmentId: confirmCancel })}
+              disabled={cancelInvestment.isLoading}
+              className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-400"
+            >
+              {cancelInvestment.isLoading ? 'Cancelando...' : 'Sí, cancelar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 
