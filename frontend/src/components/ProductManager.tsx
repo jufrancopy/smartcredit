@@ -120,7 +120,7 @@ const ProductManager: React.FC = () => {
 
   const handleStockUpdate = () => {
     if (showStockModal && stockValue) {
-      updateStock.mutate({ id: showStockModal.id, stock_disponible: parseInt(stockValue) });
+      updateStock.mutate({ id: showStockModal.id, stock_disponible: parseFloat(stockValue) });
     }
   };
 
@@ -400,6 +400,7 @@ const ProductManager: React.FC = () => {
             <p className="text-gray-600 mb-4">{showStockModal.nombre}</p>
             <input 
               type="number" 
+              step="0.01"
               value={stockValue} 
               onChange={(e) => setStockValue(e.target.value)}
               placeholder="Nuevo stock" 
