@@ -1036,16 +1036,17 @@ const CollectorDashboard: React.FC = () => {
           {/* Navigation Tabs */}
           <div className="mb-10">
             <div className="bg-white rounded-2xl shadow-lg p-2">
-              <nav className="flex space-x-2" aria-label="Tabs">
+              <nav className="grid grid-cols-2 md:flex md:space-x-2 gap-2 md:gap-0" aria-label="Tabs">
                 <button
                   onClick={() => setActiveTab('payments')}
                   className={`${
                     activeTab === 'payments'
                       ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                  } md:flex-1 py-3 px-3 md:px-6 rounded-xl font-semibold text-sm md:text-lg transition-all duration-300 text-center`}
                 >
-                  💳 Pagos
+                  <span className="block md:inline">💳</span>
+                  <span className="block md:inline md:ml-1">Pagos</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('stores')}
@@ -1053,9 +1054,10 @@ const CollectorDashboard: React.FC = () => {
                     activeTab === 'stores'
                       ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                  } md:flex-1 py-3 px-3 md:px-6 rounded-xl font-semibold text-sm md:text-lg transition-all duration-300 text-center`}
                 >
-                  🏪 Tiendas
+                  <span className="block md:inline">🏪</span>
+                  <span className="block md:inline md:ml-1">Tiendas</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('consignments')}
@@ -1063,9 +1065,10 @@ const CollectorDashboard: React.FC = () => {
                     activeTab === 'consignments'
                       ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                  } md:flex-1 py-3 px-3 md:px-6 rounded-xl font-semibold text-sm md:text-lg transition-all duration-300 text-center`}
                 >
-                  📋 Consignaciones
+                  <span className="block md:inline">📋</span>
+                  <span className="block md:inline md:ml-1">Consignaciones</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('purchases')}
@@ -1073,9 +1076,10 @@ const CollectorDashboard: React.FC = () => {
                     activeTab === 'purchases'
                       ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  } flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300`}
+                  } md:flex-1 py-3 px-3 md:px-6 rounded-xl font-semibold text-sm md:text-lg transition-all duration-300 text-center`}
                 >
-                  💰 Compras con Fondo
+                  <span className="block md:inline">💰</span>
+                  <span className="block md:inline md:ml-1">Compras con Fondo</span>
                 </button>
               </nav>
             </div>
