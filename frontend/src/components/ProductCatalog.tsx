@@ -92,6 +92,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               
               return (
                 <div key={investment.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  {/* Debug info */}
+                  <div className="text-xs text-gray-500 mb-2 bg-yellow-100 p-1 rounded">
+                    Investment ID: {investment.id} | Product ID: {investment.productId} | Saldo: {investment.saldo_pendiente}
+                  </div>
                   <div className="flex justify-between items-start mb-2">
                     <h5 className="font-semibold text-gray-800">{investment.product.nombre}</h5>
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -114,11 +118,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                             {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
                           </span>
                         </div>
-                        {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
+                        {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
                           <div className="flex justify-between">
                             <span>Saldo pendiente:</span>
                             <span className="font-semibold text-red-600">
-                              {(investment.monto_total - (investment.monto_pagado || 0)).toLocaleString('es-PY')} Gs
+                              {investment.saldo_pendiente.toLocaleString('es-PY')} Gs
                             </span>
                           </div>
                         )}
@@ -137,13 +141,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                       >
                         ✏️ Editar Precio
                       </button>
-                      {investment.tipo_pago === 'microcredito' && (investment.monto_total - (investment.monto_pagado || 0)) > 0 && (
+                      {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
                         <button
                           onClick={() => {
-                            const saldoPendiente = investment.monto_total - (investment.monto_pagado || 0);
                             const cantidadRestante = investment.cantidad_comprada - (investment.cantidad_vendida || 0);
-                            setPayingInvestment({...investment, saldo_pendiente: saldoPendiente, cantidad_restante: cantidadRestante});
-                            setPaymentAmount(saldoPendiente);
+                            setPayingInvestment({...investment, cantidad_restante: cantidadRestante});
+                            setPaymentAmount(investment.saldo_pendiente);
                             setPaymentQuantity('1');
                             setPaymentMode('quantity');
                           }}
