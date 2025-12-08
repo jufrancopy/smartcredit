@@ -185,7 +185,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               )}
               
               {/* Card del producto del catálogo */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div className={`bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 ${
+                investmentStatus && investmentStatus.pagado ? 'opacity-75' : ''
+              }`}>
               {product.imagen_url && (
                 <div className="h-48 bg-gray-200 overflow-hidden">
                   <img 
@@ -207,11 +209,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                     </span>
                     {yaComprado && investmentStatus && (
                       <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        investmentStatus.pagado 
+                        investmentStatus.esta_aprobado 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {investmentStatus.pagado ? '✅ Aprobado' : '⏳ Pendiente'}
+                        {investmentStatus.esta_aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
                       </span>
                     )}
                   </div>
@@ -246,7 +248,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   </div>
                 </div>
                 
-                {product.stock_disponible === 0 ? (
+                {/* Mostrar botón de restock si el cliente ya pagó completamente */}
+                {investmentStatus && investmentStatus.pagado ? (
+                  <button
+                    onClick={() => requestRestock.mutate({ productId: product.id })}
+                    disabled={requestRestock.isLoading}
+                    className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    {requestRestock.isLoading ? 'Enviando...' : '🔄 Solicitar Restock'}
+                  </button>
+                ) : product.stock_disponible === 0 ? (
                   <button
                     onClick={() => requestRestock.mutate({ productId: product.id })}
                     disabled={requestRestock.isLoading}
