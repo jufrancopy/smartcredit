@@ -81,92 +81,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
         <p className="text-gray-600">Invierte tu fondo acumulado en productos para revender</p>
       </div>
       
-      {/* Sección de productos ya comprados */}
-      {investments && investments.length > 0 && (
-        <div className="mb-8">
-          <h4 className="text-xl font-bold text-gray-800 mb-4">💼 Mis Productos</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {investments.map((investment: any) => {
-              const cantidadRestante = investment.cantidad_comprada - (investment.cantidad_vendida || 0);
-              if (cantidadRestante <= 0) return null;
-              
-              return (
-                <div key={investment.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  {/* Debug info */}
-                  <div className="text-xs text-gray-500 mb-2 bg-yellow-100 p-1 rounded">
-                    Investment ID: {investment.id} | Product ID: {investment.productId} | Saldo: {investment.saldo_pendiente}
-                  </div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h5 className="font-semibold text-gray-800">{investment.product.nombre}</h5>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      investment.esta_aprobado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {investment.esta_aprobado ? 'Aprobado' : 'Pendiente de Aprobación'}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-1 text-sm text-gray-600 mb-3">
-                    <div className="flex justify-between">
-                      <span>Cantidad disponible:</span>
-                      <span className="font-semibold">{cantidadRestante} {investment.product.unidad}s</span>
-                    </div>
-                    {investment.esta_aprobado && (
-                      <>
-                        <div className="flex justify-between">
-                          <span>Mi precio actual:</span>
-                          <span className="font-semibold text-green-600">
-                            {(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
-                          </span>
-                        </div>
-                        {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
-                          <div className="flex justify-between">
-                            <span>Saldo pendiente:</span>
-                            <span className="font-semibold text-red-600">
-                              {investment.saldo_pendiente.toLocaleString('es-PY')} Gs
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  
-                  {investment.esta_aprobado ? (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => {
-                          setEditingInvestment(investment);
-                          setNewPrice(investment.precio_reventa_cliente || investment.product.precio_venta_sugerido);
-                        }}
-                        className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        ✏️ Editar Precio
-                      </button>
-                      {investment.tipo_pago === 'microcredito' && investment.saldo_pendiente > 0 && (
-                        <button
-                          onClick={() => {
-                            const cantidadRestante = investment.cantidad_comprada - (investment.cantidad_vendida || 0);
-                            setPayingInvestment({...investment, cantidad_restante: cantidadRestante});
-                            setPaymentAmount(investment.saldo_pendiente);
-                            setPaymentQuantity('1');
-                            setPaymentMode('quantity');
-                          }}
-                          className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          💰 Pagar Consignación
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-3 text-gray-500 text-sm">
-                      ⏳ Esperando aprobación del cobrador
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product: any) => {
@@ -186,7 +101,80 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
           );
           
           return (
-            <div key={product.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
+            <div key={product.id} className="space-y-4">
+              {/* Card de inversión si existe */}
+              {investmentStatus && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-semibold text-gray-800">{investmentStatus.product.nombre}</h5>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      investmentStatus.esta_aprobado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {investmentStatus.esta_aprobado ? 'Aprobado' : 'Pendiente de Aprobación'}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm text-gray-600 mb-3">
+                    <div className="flex justify-between">
+                      <span>Cantidad disponible:</span>
+                      <span className="font-semibold">{investmentStatus.cantidad_restante} {investmentStatus.product.unidad}s</span>
+                    </div>
+                    {investmentStatus.esta_aprobado && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Mi precio actual:</span>
+                          <span className="font-semibold text-green-600">
+                            {(investmentStatus.precio_reventa_cliente || investmentStatus.product.precio_venta_sugerido).toLocaleString('es-PY')} Gs
+                          </span>
+                        </div>
+                        {investmentStatus.tipo_pago === 'microcredito' && investmentStatus.saldo_pendiente > 0 && (
+                          <div className="flex justify-between">
+                            <span>Saldo pendiente:</span>
+                            <span className="font-semibold text-red-600">
+                              {investmentStatus.saldo_pendiente.toLocaleString('es-PY')} Gs
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  
+                  {investmentStatus.esta_aprobado ? (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          setEditingInvestment(investmentStatus);
+                          setNewPrice(investmentStatus.precio_reventa_cliente || investmentStatus.product.precio_venta_sugerido);
+                        }}
+                        className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                      >
+                        ✏️ Editar Precio
+                      </button>
+                      {investmentStatus.tipo_pago === 'microcredito' && investmentStatus.saldo_pendiente > 0 && (
+                        <button
+                          onClick={() => {
+                            const cantidadRestante = investmentStatus.cantidad_comprada - (investmentStatus.cantidad_vendida || 0);
+                            setPayingInvestment({...investmentStatus, cantidad_restante: cantidadRestante});
+                            setPaymentAmount(investmentStatus.saldo_pendiente);
+                            setPaymentQuantity('1');
+                            setPaymentMode('quantity');
+                          }}
+                          className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          💰 Pagar Consignación
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-3 text-gray-500 text-sm">
+                      ⏳ Esperando aprobación del cobrador
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Card del producto del catálogo */}
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
               {product.imagen_url && (
                 <div className="h-48 bg-gray-200 overflow-hidden">
                   <img 
@@ -254,6 +242,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                    yaComprado ? '✅ Ya solicitado' : '🛒 Ver opciones'}
                 </button>
               </div>
+            </div>
             </div>
           );
         })}
