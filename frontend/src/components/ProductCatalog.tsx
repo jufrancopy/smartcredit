@@ -12,7 +12,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
   const { data: products, isLoading, error } = useGetProducts();
   const { data: investments } = useGetUserInvestments();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [cantidad, setCantidad] = useState<number>(1);
+  const [cantidad, setCantidad] = useState('1');
   const [precioReventa, setPrecioReventa] = useState(0);
   const [editingInvestment, setEditingInvestment] = useState<any>(null);
   const [newPrice, setNewPrice] = useState(0);
@@ -24,7 +24,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
     onSuccess: () => {
       toast.success('¡Producto comprado exitosamente!');
       setSelectedProduct(null);
-      setCantidad(1);
+      setCantidad('1');
       setPrecioReventa(0);
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
@@ -35,7 +35,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
 
   const handleBuyClick = (product: any) => {
     setSelectedProduct(product);
-    setCantidad(1);
+    setCantidad('1');
     setPrecioReventa(product.precio_venta_sugerido);
   };
 
@@ -270,29 +270,17 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </label>
                 <input
                   type="text"
-                  value={cantidad === 0 ? '' : cantidad}
+                  value={cantidad}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '') {
-                      setCantidad(0);
-                    } else {
-                      // Permitir solo números, punto y coma
-                      const regex = /^[0-9]*[.,]?[0-9]*$/;
-                      if (regex.test(value)) {
-                        const cleanValue = value.replace(',', '.');
-                        const numValue = parseFloat(cleanValue);
-                        if (!isNaN(numValue)) {
-                          setCantidad(numValue);
-                        } else if (value.endsWith('.') || value.endsWith(',')) {
-                          // Permitir escribir el punto/coma
-                          setCantidad(parseFloat(value.slice(0, -1)) || 0);
-                        }
-                      }
+                    const regex = /^[0-9]*[.,]?[0-9]*$/;
+                    if (value === '' || regex.test(value)) {
+                      setCantidad(value.replace(',', '.'));
                     }
                   }}
                   onBlur={() => {
-                    if (cantidad === 0) {
-                      setCantidad(1);
+                    if (!cantidad || parseFloat(cantidad) <= 0) {
+                      setCantidad('1');
                     }
                   }}
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -334,25 +322,25 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Cantidad:</span>
-                  <span className="font-bold">{cantidad} {selectedProduct.unidad}s</span>
+                  <span className="font-bold">{parseFloat(cantidad) || 1} {selectedProduct.unidad}s</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total a pagar:</span>
-                  <span className="text-purple-600">{(selectedProduct.precio_compra * cantidad).toLocaleString('es-PY')} Gs</span>
+                  <span className="text-purple-600">{(selectedProduct.precio_compra * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
                 </div>
                 <div className="flex justify-between text-sm text-green-600 mt-1">
                   <span>Ganancia potencial:</span>
-                  <span>+{(((precioReventa || selectedProduct.precio_venta_sugerido) - selectedProduct.precio_compra) * cantidad).toLocaleString('es-PY')} Gs</span>
+                  <span>+{(((precioReventa || selectedProduct.precio_venta_sugerido) - selectedProduct.precio_compra) * (parseFloat(cantidad) || 1)).toLocaleString('es-PY')} Gs</span>
                 </div>
               </div>
               
               <div className="space-y-3">
-                {fondoDisponible >= (selectedProduct.precio_compra * cantidad) && (
+                {fondoDisponible >= (selectedProduct.precio_compra * (parseFloat(cantidad) || 1)) && (
                   <button
                     onClick={() => {
                       buyProduct.mutate({
                         productId: selectedProduct.id,
-                        cantidad: cantidad,
+                        cantidad: parseFloat(cantidad) || 1,
                         tipo_pago: 'inmediato',
                         precio_reventa_cliente: precioReventa
                       });
