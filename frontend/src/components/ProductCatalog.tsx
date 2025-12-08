@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGetProducts, useBuyProduct, useGetUserInvestments } from '../queries';
+import { useGetProducts, useBuyProduct, useGetUserInvestments, useRequestRestock } from '../queries';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -35,6 +35,15 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['pending-consignments'] });
       queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
+  const requestRestock = useRequestRestock({
+    onSuccess: () => {
+      toast.success('Solicitud de restock enviada exitosamente');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -231,18 +240,27 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   </div>
                 </div>
                 
-                <button
-                  onClick={() => handleBuyClick(product)}
-                  disabled={product.stock_disponible === 0 || yaComprado}
-                  className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
-                    product.stock_disponible > 0 && !yaComprado
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {product.stock_disponible === 0 ? '❌ Sin stock' : 
-                   yaComprado ? '✅ Ya solicitado' : '🛒 Ver opciones'}
-                </button>
+                {product.stock_disponible === 0 ? (
+                  <button
+                    onClick={() => requestRestock.mutate({ productId: product.id })}
+                    disabled={requestRestock.isLoading}
+                    className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    {requestRestock.isLoading ? 'Enviando...' : '🔄 Solicitar Restock'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleBuyClick(product)}
+                    disabled={yaComprado}
+                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
+                      !yaComprado
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {yaComprado ? '✅ Ya solicitado' : '🛒 Ver opciones'}
+                  </button>
+                )}
               </div>
             </div>
             </div>

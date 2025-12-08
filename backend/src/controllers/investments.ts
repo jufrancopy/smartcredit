@@ -949,3 +949,69 @@ export const fixInvestmentPrices = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error al corregir precios' });
   }
 };
+
+// Solicitar restock de producto agotado
+export const requestRestock = async (req: AuthRequest, res: Response) => {
+  try {
+    const { productId } = req.body;
+    const userId = req.userId!;
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    // Verificar si ya existe una solicitud pendiente
+    const existingRequest = await prisma.restockRequest.findFirst({
+      where: {
+        userId,
+        productId,
+        estado: 'pendiente'
+      }
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ error: 'Ya tienes una solicitud pendiente para este producto' });
+    }
+
+    // Crear solicitud de restock
+    const restockRequest = await prisma.restockRequest.create({
+      data: {
+        userId,
+        productId,
+        estado: 'pendiente'
+      }
+    });
+
+    res.json({ message: 'Solicitud de restock enviada exitosamente' });
+  } catch (error) {
+    console.error('Error al solicitar restock:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// ADMIN/COBRADOR: Obtener solicitudes de restock
+export const getRestockRequests = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const requests = await prisma.restockRequest.findMany({
+      where: { estado: 'pendiente' },
+      include: {
+        user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
+        product: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error al obtener solicitudes de restock:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};

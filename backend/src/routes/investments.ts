@@ -54,7 +54,9 @@ import {
   updateInvestmentPrice,
   cancelInvestment,
   fixInvestmentPrices,
-  getProductPayments
+  getProductPayments,
+  requestRestock,
+  getRestockRequests
 } from '../controllers/investments';
 
 const router = express.Router();
@@ -91,6 +93,8 @@ router.post('/approve-consignment', authenticateToken, approveConsignment);
 router.post('/reject-consignment', authenticateToken, rejectConsignment);
 router.post('/cancel-investment', authenticateToken, cancelInvestment);
 router.get('/product-payments', authenticateToken, getProductPayments);
+router.post('/request-restock', authenticateToken, requestRestock);
+router.get('/restock-requests', authenticateToken, getRestockRequests);
 // router.post('/fix-investment-prices', authenticateToken, fixInvestmentPrices); // Endpoint temporal - ya no necesario
 
 export default router;

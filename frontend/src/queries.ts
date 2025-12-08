@@ -827,6 +827,42 @@ export const useUpdateLoan = (options?: UseMutationOptions<any, Error, any>) => 
   });
 };
 
+// Request restock for out-of-stock product
+export const useRequestRestock = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { productId: number }) => {
+      const res = await fetch(`${API_URL}/investments/request-restock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al solicitar restock');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Get restock requests
+export const useGetRestockRequests = () => {
+  return useQuery({
+    queryKey: ['restock-requests'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/investments/restock-requests`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    },
+  });
+};
+
 export const downloadLoanPDF = async (loanId: number) => {
   try {
     const res = await fetch(`${API_URL}/pdf/loan/${loanId}`, {

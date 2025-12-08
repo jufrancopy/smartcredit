@@ -6,7 +6,7 @@ import StoreMonitor from './StoreMonitor';
 import ConsignmentManager from './ConsignmentManager';
 import ConsignmentTracking from './ConsignmentTracking';
 import PurchaseTracking from './PurchaseTracking';
-import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF, useGetProductPayments } from '../queries';
+import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF, useGetProductPayments, useGetRestockRequests } from '../queries';
 import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
@@ -661,6 +661,7 @@ interface InstallmentForCollector extends Installment {
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
   const { data: productPayments } = useGetProductPayments();
+  const { data: restockRequests } = useGetRestockRequests();
   const confirmPaymentMutation = useConfirmPayment();
   const deletePaymentMutation = useDeletePayment();
 
@@ -1037,7 +1038,7 @@ const CollectorDashboard: React.FC = () => {
           {/* Navigation Tabs */}
           <div className="mb-10">
             <div className="bg-white rounded-2xl shadow-lg p-2">
-              <nav className="grid grid-cols-2 lg:grid-cols-5 md:flex md:space-x-2 gap-2 md:gap-0" aria-label="Tabs">
+              <nav className="grid grid-cols-2 lg:grid-cols-6 md:flex md:space-x-2 gap-2 md:gap-0" aria-label="Tabs">
                 <button
                   onClick={() => setActiveTab('payments')}
                   className={`${
@@ -1092,6 +1093,17 @@ const CollectorDashboard: React.FC = () => {
                 >
                   <span className="block md:inline">💰</span>
                   <span className="block md:inline md:ml-1">Compras con Fondo</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('restock')}
+                  className={`${
+                    activeTab === 'restock'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  } md:flex-1 py-3 px-2 md:px-4 rounded-xl font-semibold text-xs md:text-lg transition-all duration-300 text-center`}
+                >
+                  <span className="block md:inline">🔄</span>
+                  <span className="block md:inline md:ml-1">Solicitudes Restock</span>
                 </button>
               </nav>
             </div>
@@ -1292,6 +1304,88 @@ const CollectorDashboard: React.FC = () => {
           {activeTab === 'purchases' && (
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
               <PurchaseTracking />
+            </div>
+          )}
+
+          {activeTab === 'restock' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl flex items-center justify-center">
+                  <span className="text-xl text-white">🔄</span>
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-800">Solicitudes de Restock</h2>
+                  <p className="text-slate-600">Productos agotados que los clientes quieren volver a comprar</p>
+                </div>
+              </div>
+              
+              {restockRequests && restockRequests.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {restockRequests.map((request: any) => (
+                    <div key={request.id} className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-2xl p-6 hover:shadow-lg transition-all">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-3">
+                            <span className="text-white font-bold">
+                              {request.product.nombre.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-slate-800">{request.product.nombre}</h3>
+                            <p className="text-sm text-slate-600">{request.product.categoria}</p>
+                          </div>
+                        </div>
+                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">
+                          Pendiente
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-slate-600">Cliente:</span>
+                          <span className="font-semibold">{request.user.nombre} {request.user.apellido}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-slate-600">WhatsApp:</span>
+                          <span className="font-semibold text-green-600">{request.user.whatsapp}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-slate-600">Precio sugerido:</span>
+                          <span className="font-semibold">{request.product.precio_venta_sugerido.toLocaleString('es-PY')} Gs</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-slate-600">Solicitado:</span>
+                          <span className="font-semibold">{new Date(request.createdAt).toLocaleDateString('es-ES')}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white rounded-xl p-4">
+                        <p className="text-xs text-slate-500 mb-2">Descripción del producto:</p>
+                        <p className="text-sm text-slate-700">{request.product.descripcion}</p>
+                      </div>
+                      
+                      <div className="mt-4 flex gap-2">
+                        <button className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+                          ✅ Reabastecer
+                        </button>
+                        <button className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors">
+                          ❌ Rechazar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span className="text-4xl">🔄</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-3">No hay solicitudes de restock</h3>
+                  <p className="text-slate-600 text-lg max-w-md mx-auto">
+                    Cuando los clientes soliciten productos agotados, aparecerán aquí.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
