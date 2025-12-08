@@ -50,18 +50,38 @@ const TiendaPublica: React.FC = () => {
   const template = client.tienda_template || 'clasica';
 
   const templates = {
-    clasica: 'bg-gradient-to-br from-purple-50 to-pink-50',
-    moderna: 'bg-gradient-to-br from-blue-50 to-indigo-100', 
-    natural: 'bg-gradient-to-br from-green-50 to-emerald-100'
+    clasica: {
+      bg: 'bg-gradient-to-br from-purple-100 to-pink-200',
+      title: 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent',
+      badge: 'bg-purple-100 text-purple-800',
+      button: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600',
+      accent: 'text-purple-600'
+    },
+    moderna: {
+      bg: 'bg-gradient-to-br from-blue-100 to-indigo-200',
+      title: 'bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent',
+      badge: 'bg-blue-100 text-blue-800',
+      button: 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600',
+      accent: 'text-blue-600'
+    },
+    natural: {
+      bg: 'bg-gradient-to-br from-green-100 to-emerald-200',
+      title: 'bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent',
+      badge: 'bg-green-100 text-green-800',
+      button: 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600',
+      accent: 'text-green-600'
+    }
   };
 
+  const currentTemplate = templates[template] || templates.clasica;
+
   return (
-    <div className={`min-h-screen ${templates[template] || templates.clasica}`}>
+    <div className={`min-h-screen ${currentTemplate.bg}`}>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="text-6xl mb-4">🏪</div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+          <h1 className={`text-4xl font-bold ${currentTemplate.title} mb-2`}>
             {client.tienda_nombre || `Tienda de ${client.nombre} ${client.apellido}`}
           </h1>
           <p className="text-gray-600 text-lg">Productos frescos y de calidad</p>
@@ -99,7 +119,7 @@ const TiendaPublica: React.FC = () => {
                     <h3 className="text-xl font-bold text-gray-800 truncate">
                       {product.nombre.length > 18 ? product.nombre.substring(0, 18) + '...' : product.nombre}
                     </h3>
-                    <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full">
+                    <span className={`${currentTemplate.badge} text-xs font-semibold px-3 py-1 rounded-full`}>
                       {product.categoria}
                     </span>
                   </div>
@@ -136,7 +156,7 @@ const TiendaPublica: React.FC = () => {
 ¿Está disponible? ¿Cuándo podríamos coordinar?`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-center block"
+                      className={`w-full ${currentTemplate.button} text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-center block`}
                     >
                       💬 Consultar por WhatsApp
                     </a>
@@ -156,7 +176,7 @@ const TiendaPublica: React.FC = () => {
         {/* Footer */}
         <div className="text-center mt-16 py-8 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            Tienda online powered by <span className="font-semibold text-purple-600">SmartCredit</span>
+            Tienda online powered by <span className={`font-semibold ${currentTemplate.accent}`}>SmartCredit</span>
           </p>
         </div>
       </div>
