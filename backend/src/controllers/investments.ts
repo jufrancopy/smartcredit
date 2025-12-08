@@ -545,25 +545,42 @@ export const configureStore = async (req: AuthRequest, res: Response) => {
 // Pagar microcrédito (parcial o total)
 export const payMicrocredit = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('PayMicrocredit - Body:', req.body);
+    console.log('PayMicrocredit - File:', req.file);
+    
     const { investmentId, monto } = req.body;
     const userId = req.userId!;
     const comprobante = req.file;
+
+    if (!investmentId) {
+      return res.status(400).json({ error: 'Investment ID requerido' });
+    }
+
+    if (!monto) {
+      return res.status(400).json({ error: 'Monto requerido' });
+    }
+
+    if (!comprobante) {
+      return res.status(400).json({ error: 'Comprobante de transferencia requerido' });
+    }
 
     const investment = await prisma.investment.findFirst({
       where: { id: parseInt(investmentId), userId, tipo_pago: 'microcredito' }
     });
 
-    if (!investment) return res.status(404).json({ error: 'Microcrédito no encontrado' });
+    if (!investment) {
+      return res.status(404).json({ error: 'Microcrédito no encontrado' });
+    }
 
     const saldoPendiente = investment.monto_total - investment.monto_pagado;
-    const montoPagar = parseFloat(monto) || saldoPendiente;
+    const montoPagar = parseFloat(monto);
+
+    if (isNaN(montoPagar) || montoPagar <= 0) {
+      return res.status(400).json({ error: 'Monto inválido' });
+    }
 
     if (montoPagar > saldoPendiente) {
       return res.status(400).json({ error: 'Monto excede la deuda pendiente' });
-    }
-
-    if (!comprobante) {
-      return res.status(400).json({ error: 'Comprobante de transferencia requerido' });
     }
 
     const nuevoMontoPagado = investment.monto_pagado + montoPagar;
@@ -587,7 +604,10 @@ export const payMicrocredit = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Error paying microcredit:', error);
-    res.status(500).json({ error: 'Error al pagar microcrédito' });
+    res.status(500).json({ 
+      error: 'Error al pagar microcrédito',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    });
   }
 };
 

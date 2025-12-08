@@ -1,12 +1,19 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { authenticateToken } from '../middleware/auth';
+
+// Crear directorio si no existe
+const uploadsDir = 'uploads/receipts/';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Configuración de multer para comprobantes
 const receiptStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/receipts/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
