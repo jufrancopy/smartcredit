@@ -661,7 +661,7 @@ interface InstallmentForCollector extends Installment {
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
   const { data: productPayments } = useGetProductPayments();
-  const { data: restockRequests } = useGetRestockRequests();
+  const { data: restockRequests } = useGetRestockRequests(activeTab === 'restock');
   const confirmPaymentMutation = useConfirmPayment();
   const deletePaymentMutation = useDeletePayment();
 
