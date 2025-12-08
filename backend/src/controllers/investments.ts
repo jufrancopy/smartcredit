@@ -26,8 +26,8 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
 
     const productsWithDetails = products.map(product => {
       const inventoryDetails = product.investments.map(inv => {
-        const vendido = inv.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
-        const disponible = inv.cantidad_comprada - vendido;
+        const vendido = inv.salesReports.reduce((sum, sale) => sum + Number(sale.cantidad_vendida), 0);
+        const disponible = Number(inv.cantidad_comprada) - vendido;
         return {
           cliente: `${inv.user.nombre} ${inv.user.apellido}`,
           cantidad_total: inv.cantidad_comprada,
@@ -67,7 +67,7 @@ export const buyProduct = async (req: AuthRequest, res: Response) => {
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-    if (product.stock_disponible < parseFloat(cantidad)) return res.status(400).json({ error: 'Stock insuficiente' });
+    if (Number(product.stock_disponible) < parseFloat(cantidad)) return res.status(400).json({ error: 'Stock insuficiente' });
 
     const montoTotal = product.precio_venta_sugerido * parseFloat(cantidad);
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -135,7 +135,7 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
     const investmentsWithStats = investments.map(investment => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
       const gananciasGeneradas = investment.salesReports.reduce((sum, sale) => sum + sale.ganancia_generada, 0);
-      const cantidadRestante = investment.cantidad_comprada - totalVendido;
+      const cantidadRestante = Number(investment.cantidad_comprada) - totalVendido;
       const saldoPendiente = investment.monto_total - investment.monto_pagado;
 
       return {
@@ -258,8 +258,8 @@ export const getInvestmentDashboard = async (req: AuthRequest, res: Response) =>
     
     // Calcular ganancia potencial de productos no vendidos
     const gananciaPotencial = investments.reduce((sum, inv) => {
-      const vendido = inv.salesReports.reduce((salesSum, sale) => salesSum + sale.cantidad_vendida, 0);
-      const restante = inv.cantidad_comprada - vendido;
+      const vendido = inv.salesReports.reduce((salesSum, sale) => salesSum + Number(sale.cantidad_vendida), 0);
+      const restante = Number(inv.cantidad_comprada) - vendido;
       const gananciaUnitaria = inv.product.precio_venta_sugerido - inv.precio_unitario;
       return sum + (restante * gananciaUnitaria);
     }, 0);
@@ -409,7 +409,7 @@ export const getClientProducts = async (req: Request, res: Response) => {
     // Productos de SmartCredit disponibles
     const smartCreditProducts = investments.map(investment => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
-      const cantidadDisponible = investment.cantidad_comprada - totalVendido;
+      const cantidadDisponible = Number(investment.cantidad_comprada) - totalVendido;
       
       return {
         ...investment.product,
@@ -480,7 +480,7 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
         sum + inv.salesReports.reduce((salesSum, sale) => salesSum + sale.monto_total_venta, 0), 0
       );
       const recentSales = client.investments.flatMap(inv => inv.salesReports)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
         .slice(0, 3);
 
       return {
@@ -923,7 +923,7 @@ export const fixInvestmentPrices = async (req: AuthRequest, res: Response) => {
         // Si el precio_unitario es igual al precio_compra del producto, corregir
         if (investment.precio_unitario === investment.product.precio_compra) {
           const newPrecioUnitario = investment.product.precio_venta_sugerido;
-          const newMontoTotal = investment.cantidad_comprada * newPrecioUnitario;
+          const newMontoTotal = Number(investment.cantidad_comprada) * newPrecioUnitario;
           
           await tx.investment.update({
             where: { id: investment.id },
