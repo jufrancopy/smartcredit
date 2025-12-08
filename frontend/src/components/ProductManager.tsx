@@ -10,16 +10,21 @@ const ExistingImageSelector: React.FC<{ onSelect: (imageUrl: string) => void; cu
   
   useEffect(() => {
     // Obtener imágenes existentes de productos
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/products`)
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/investments/products`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
       .then(res => res.json())
       .then(products => {
-        const images = products
-          .filter((p: any) => p.imagen_url)
-          .map((p: any) => p.imagen_url)
-          .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index); // Eliminar duplicados
-        setExistingImages(images);
+        if (Array.isArray(products)) {
+          const images = products
+            .filter((p: any) => p.imagen_url)
+            .map((p: any) => p.imagen_url)
+            .filter((url: string, index: number, arr: string[]) => arr.indexOf(url) === index);
+          setExistingImages(images);
+        }
       })
-      .catch(console.error);
+      .catch(() => setExistingImages([]));
   }, []);
   
   if (existingImages.length === 0) return null;
