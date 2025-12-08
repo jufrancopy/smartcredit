@@ -296,9 +296,9 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
         categoria,
         precio_compra: parseInt(precio_compra),
         precio_venta_sugerido: parseInt(precio_venta_sugerido),
-        stock_disponible: parseInt(stock_disponible),
+        stock_disponible: parseFloat(stock_disponible),
         unidad,
-        cantidad_por_unidad: parseInt(cantidad_por_unidad),
+        cantidad_por_unidad: parseFloat(cantidad_por_unidad),
         imagen_url
       }
     });
@@ -328,9 +328,9 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
         categoria,
         precio_compra: parseInt(precio_compra),
         precio_venta_sugerido: parseInt(precio_venta_sugerido),
-        stock_disponible: parseInt(stock_disponible),
+        stock_disponible: parseFloat(stock_disponible),
         unidad,
-        cantidad_por_unidad: parseInt(cantidad_por_unidad),
+        cantidad_por_unidad: parseFloat(cantidad_por_unidad),
         imagen_url
       }
     });
