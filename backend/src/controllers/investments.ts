@@ -638,7 +638,7 @@ export const getPendingConsignments = async (req: AuthRequest, res: Response) =>
   }
 };
 
-// ADMIN/COBRADOR: Obtener consignaciones aprobadas
+// ADMIN/COBRADOR: Obtener consignaciones aprobadas (pagadas y no pagadas)
 export const getApprovedConsignments = async (req: AuthRequest, res: Response) => {
   try {
     if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
@@ -647,7 +647,6 @@ export const getApprovedConsignments = async (req: AuthRequest, res: Response) =
 
     const approvedInvestments = await prisma.investment.findMany({
       where: { 
-        pagado: false,
         tipo_pago: 'microcredito',
         fecha_limite_pago: null, // Aprobadas
         estado: { in: ['activo', 'vendido_parcial'] }
