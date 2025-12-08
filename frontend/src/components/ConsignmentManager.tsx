@@ -12,7 +12,9 @@ const ConsignmentManager: React.FC = () => {
     onSuccess: () => {
       toast.success('Consignación aprobada');
       queryClient.invalidateQueries({ queryKey: ['pending-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -24,6 +26,7 @@ const ConsignmentManager: React.FC = () => {
       toast.success('Consignación rechazada');
       queryClient.invalidateQueries({ queryKey: ['pending-consignments'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
     },
     onError: (error: any) => {
       toast.error(error.message);

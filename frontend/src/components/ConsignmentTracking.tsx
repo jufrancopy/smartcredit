@@ -13,7 +13,10 @@ const ConsignmentTracking: React.FC = () => {
       toast.success('Compra cancelada exitosamente');
       setConfirmCancel(null);
       queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['paid-purchases'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
     },
     onError: (error: any) => {
       toast.error(error.message);

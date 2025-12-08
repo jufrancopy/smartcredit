@@ -29,6 +29,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
       setCantidad('1');
       setPrecioReventa(0);
       queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-consignments'] });
+      queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -457,6 +461,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         toast.success('Precio actualizado exitosamente');
                         setEditingInvestment(null);
                         queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
+                        queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
                       } else {
                         throw new Error('Error al actualizar precio');
                       }
@@ -656,6 +661,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                         setPayingInvestment(null);
                         queryClient.invalidateQueries({ queryKey: ['userInvestments'] });
                         queryClient.invalidateQueries({ queryKey: ['user'] });
+                        queryClient.invalidateQueries({ queryKey: ['approved-consignments'] });
                       } else {
                         const error = await response.json();
                         throw new Error(error.error);
