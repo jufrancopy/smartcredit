@@ -4,7 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 const ConsignmentTracking: React.FC = () => {
-  const { data: approvedConsignments, isLoading, error } = useGetApprovedConsignments();
+  const { data: allConsignments, isLoading, error } = useGetApprovedConsignments();
+  const [showPaid, setShowPaid] = useState(false);
+  
+  // Filtrar consignaciones según el estado de pago
+  const approvedConsignments = allConsignments?.filter((inv: any) => 
+    showPaid ? inv.pagado : !inv.pagado
+  );
   const [confirmCancel, setConfirmCancel] = useState<number | null>(null);
   const queryClient = useQueryClient();
   
@@ -52,6 +58,32 @@ const ConsignmentTracking: React.FC = () => {
 
   return (
     <>
+      {/* Filtros */}
+      <div className="mb-6">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowPaid(false)}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              !showPaid 
+                ? 'bg-orange-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            💳 Pendientes de Pago ({allConsignments?.filter((inv: any) => !inv.pagado).length || 0})
+          </button>
+          <button
+            onClick={() => setShowPaid(true)}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              showPaid 
+                ? 'bg-green-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            ✅ Pagados ({allConsignments?.filter((inv: any) => inv.pagado).length || 0})
+          </button>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {approvedConsignments.map((investment: any) => {
         const totalVendido = investment.salesReports?.reduce((sum: number, sale: any) => sum + sale.cantidad_vendida, 0) || 0;
@@ -66,8 +98,12 @@ const ConsignmentTracking: React.FC = () => {
                   <h3 className="text-lg font-bold text-gray-800">{investment.product.nombre}</h3>
                   <p className="text-sm text-gray-600">{investment.user.nombre} {investment.user.apellido}</p>
                 </div>
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                  ✅ Activo
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  investment.pagado 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {investment.pagado ? '✅ Pagado' : '💳 Pendiente'}
                 </span>
               </div>
               

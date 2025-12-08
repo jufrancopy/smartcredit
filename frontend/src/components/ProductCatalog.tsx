@@ -248,22 +248,26 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   </div>
                 </div>
                 
-                {/* Mostrar botón de restock si el cliente pagó completamente Y el stock es 0 */}
+                {/* Lógica de botones según estado del producto y pago */}
                 {investmentStatus && investmentStatus.pagado && product.stock_disponible === 0 ? (
-                  <button
-                    onClick={() => requestRestock.mutate({ productId: product.id })}
-                    disabled={requestRestock.isLoading}
-                    className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    {requestRestock.isLoading ? 'Enviando...' : '🔄 Solicitar Restock'}
-                  </button>
+                  <div className="space-y-2">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                      <span className="text-green-800 font-semibold text-sm">✅ Producto Pagado Completamente</span>
+                    </div>
+                    <button
+                      onClick={() => requestRestock.mutate({ productId: product.id })}
+                      disabled={requestRestock.isLoading}
+                      className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      {requestRestock.isLoading ? 'Enviando...' : '🔄 Solicitar Restock'}
+                    </button>
+                  </div>
                 ) : product.stock_disponible === 0 ? (
                   <button
-                    onClick={() => requestRestock.mutate({ productId: product.id })}
-                    disabled={requestRestock.isLoading}
-                    className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled
+                    className="w-full py-3 px-4 rounded-lg font-semibold bg-gray-300 text-gray-500 cursor-not-allowed"
                   >
-                    {requestRestock.isLoading ? 'Enviando...' : '🔄 Solicitar Restock'}
+                    ❌ Sin stock
                   </button>
                 ) : (
                   <button
