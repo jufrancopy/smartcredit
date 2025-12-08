@@ -198,7 +198,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
               
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-lg font-bold text-gray-800">{product.nombre}</h4>
+                  <h4 className="text-lg font-bold text-gray-800 truncate">
+                    {product.nombre.length > 20 ? product.nombre.substring(0, 20) + '...' : product.nombre}
+                  </h4>
                   <div className="flex gap-2">
                     <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {product.categoria}
@@ -215,7 +217,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                   </div>
                 </div>
                 
-                <p className="text-gray-600 text-sm mb-4">{product.descripcion}</p>
+                <p className="text-gray-600 text-sm mb-4 h-10 overflow-hidden">
+                  {product.descripcion && product.descripcion.length > 80 
+                    ? product.descripcion.substring(0, 80) + '...' 
+                    : product.descripcion}
+                </p>
                 
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">

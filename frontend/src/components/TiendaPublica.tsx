@@ -89,13 +89,19 @@ const TiendaPublica: React.FC = () => {
                 
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-800">{product.nombre}</h3>
+                    <h3 className="text-xl font-bold text-gray-800 truncate">
+                      {product.nombre.length > 18 ? product.nombre.substring(0, 18) + '...' : product.nombre}
+                    </h3>
                     <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full">
                       {product.categoria}
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-4">{product.descripcion}</p>
+                  <p className="text-gray-600 text-sm mb-4 h-10 overflow-hidden">
+                    {product.descripcion && product.descripcion.length > 70 
+                      ? product.descripcion.substring(0, 70) + '...' 
+                      : product.descripcion}
+                  </p>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
