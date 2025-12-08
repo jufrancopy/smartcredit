@@ -565,7 +565,7 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
   const [showMiniTienda, setShowMiniTienda] = useState(false);
   const [showStoreConfig, setShowStoreConfig] = useState(false);
-  const [storeForm, setStoreForm] = useState({ nombre: '', slug: '' });
+  const [storeForm, setStoreForm] = useState({ nombre: '', slug: '', template: 'clasica' });
   const [activeTab, setActiveTab] = useState('catalog');
   const queryClient = useQueryClient();
   
@@ -1202,7 +1202,8 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
                 e.preventDefault();
                 const nombre = storeForm.nombre || userData?.tienda_nombre || `Tienda de ${userData?.nombre}`;
                 const slug = storeForm.slug || userData?.tienda_slug || `${userData?.nombre?.toLowerCase().replace(/\s+/g, '-')}-${userData?.id}`;
-                configureStore.mutate({ tienda_nombre: nombre, tienda_slug: slug });
+                const template = storeForm.template || userData?.tienda_template || 'clasica';
+                configureStore.mutate({ tienda_nombre: nombre, tienda_slug: slug, tienda_template: template });
               }} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1215,6 +1216,21 @@ const ClientPaymentView: React.FC<ClientPaymentViewProps> = ({ userId }) => {
                     placeholder={userData?.tienda_nombre || `Tienda de ${userData?.nombre || 'Mi Tienda'}`}
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Plantilla de tu tienda
+                  </label>
+                  <select
+                    value={storeForm.template}
+                    onChange={(e) => setStoreForm({...storeForm, template: e.target.value})}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 mb-4"
+                  >
+                    <option value="clasica">🟣 Clásica (Morado/Rosa)</option>
+                    <option value="moderna">🔵 Moderna (Azul/Índigo)</option>
+                    <option value="natural">🟢 Natural (Verde/Esmeralda)</option>
+                  </select>
                 </div>
                 
                 <div>

@@ -516,7 +516,7 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
 export const configureStore = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
-    const { tienda_nombre, tienda_slug } = req.body;
+    const { tienda_nombre, tienda_slug, tienda_template } = req.body;
 
     // Verificar que el slug no esté en uso
     if (tienda_slug) {
@@ -537,6 +537,7 @@ export const configureStore = async (req: AuthRequest, res: Response) => {
       data: {
         tienda_nombre: tienda_nombre || null,
         tienda_slug: tienda_slug || null,
+        tienda_template: tienda_template || 'clasica',
         tienda_activa: !!(tienda_nombre && tienda_slug)
       }
     });

@@ -25,6 +25,7 @@ model User {
   tienda_activa    Boolean         @default(false)
   tienda_nombre    String?
   tienda_slug      String?         @unique
+  tienda_template  String?         @default("clasica")
   clientProducts   ClientProduct[]
   investments      Investment[]
   loans            Loan[]

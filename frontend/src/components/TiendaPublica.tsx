@@ -47,9 +47,16 @@ const TiendaPublica: React.FC = () => {
   }
 
   const { client, products } = data;
+  const template = client.tienda_template || 'clasica';
+
+  const templates = {
+    clasica: 'bg-gradient-to-br from-purple-50 to-pink-50',
+    moderna: 'bg-gradient-to-br from-blue-50 to-indigo-100', 
+    natural: 'bg-gradient-to-br from-green-50 to-emerald-100'
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className={`min-h-screen ${templates[template] || templates.clasica}`}>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-10">
