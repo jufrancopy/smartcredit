@@ -131,7 +131,14 @@ export const getUserInvestments = async (req: AuthRequest, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const investmentsWithStats = investments.map(investment => {
+    // Filtrar solo inversiones aprobadas (pagadas O consignaciones aprobadas)
+    const approvedInvestments = investments.filter(investment => {
+      if (investment.pagado) return true; // Pagadas completamente
+      if (investment.tipo_pago === 'microcredito' && !investment.fecha_limite_pago) return true; // Consignaciones aprobadas
+      return false; // Pendientes de aprobación
+    });
+
+    const investmentsWithStats = approvedInvestments.map(investment => {
       const totalVendido = investment.salesReports.reduce((sum, sale) => sum + sale.cantidad_vendida, 0);
       const gananciasGeneradas = investment.salesReports.reduce((sum, sale) => sum + sale.ganancia_generada, 0);
       const cantidadRestante = investment.cantidad_comprada - totalVendido;
