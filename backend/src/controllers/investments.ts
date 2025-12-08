@@ -476,14 +476,17 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
     // Calcular estadísticas por tienda
     const storesData = clients.map(client => {
       const totalInvestments = client.investments.length;
-      const totalSales = client.investments.reduce((sum, inv) => 
-        sum + inv.salesReports.reduce((salesSum, sale) => salesSum + sale.monto_total_venta, 0), 0
-      );
-      const recentSales = client.investments.flatMap(inv => inv.salesReports)
-        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      
+      // Calcular ventas totales
+      const allSalesReports = client.investments.flatMap(inv => inv.salesReports);
+      const totalSales = allSalesReports.reduce((sum, sale) => sum + Number(sale.monto_total_venta), 0);
+      
+      // Obtener ventas recientes ordenadas por fecha
+      const recentSales = allSalesReports
+        .sort((a, b) => new Date(b.fecha_venta || b.createdAt || 0).getTime() - new Date(a.fecha_venta || a.createdAt || 0).getTime())
         .slice(0, 3);
 
-      return {
+      const storeData = {
         cliente: {
           id: client.id,
           nombre: `${client.nombre} ${client.apellido}`,
@@ -497,6 +500,11 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
         },
         ventas_recientes: recentSales
       };
+      
+      // Debug: mostrar datos calculados
+      console.log(`Tienda ${client.nombre}: Inversiones=${totalInvestments}, Ventas=${totalSales}, Reportes=${allSalesReports.length}`);
+      
+      return storeData;
     });
 
     res.json(storesData);

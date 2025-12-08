@@ -3,6 +3,9 @@ import { useGetCollectorStores } from '../queries';
 
 const StoreMonitor: React.FC = () => {
   const { data: stores, isLoading, error } = useGetCollectorStores();
+  
+  // Debug: mostrar datos recibidos
+  console.log('StoreMonitor - Datos recibidos:', stores);
 
   if (isLoading) {
     return (
@@ -66,12 +69,12 @@ const StoreMonitor: React.FC = () => {
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {store.estadisticas.total_ventas.toLocaleString('es-PY')} Gs
+                      {(store.estadisticas.total_ventas || 0).toLocaleString('es-PY')} Gs
                     </div>
                     <div className="text-xs text-gray-500">Total Ventas</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{store.estadisticas.ventas_recientes}</div>
+                    <div className="text-2xl font-bold text-purple-600">{store.estadisticas.ventas_recientes || 0}</div>
                     <div className="text-xs text-gray-500">Ventas Recientes</div>
                   </div>
                 </div>
