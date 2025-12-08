@@ -48,7 +48,8 @@ const ConsignmentTracking: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {approvedConsignments.map((investment: any) => {
         const totalVendido = investment.salesReports?.reduce((sum: number, sale: any) => sum + sale.cantidad_vendida, 0) || 0;
         const cantidadRestante = investment.cantidad_comprada - totalVendido;
@@ -125,9 +126,9 @@ const ConsignmentTracking: React.FC = () => {
           </div>
         );
       })}
-    </div>
-    
-    {/* Modal de confirmación */}
+      </div>
+      
+      {/* Modal de confirmación */}
     {confirmCancel && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl p-6 w-full max-w-md">
