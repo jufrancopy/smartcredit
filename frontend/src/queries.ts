@@ -854,12 +854,17 @@ export const useGetRestockRequests = () => {
   return useQuery({
     queryKey: ['restock-requests'],
     queryFn: async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token available');
+      }
       const res = await fetch(`${API_URL}/investments/restock-requests`, { headers: getAuthHeaders() });
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }
       return res.json();
     },
+    enabled: !!localStorage.getItem('token')
   });
 };
 
