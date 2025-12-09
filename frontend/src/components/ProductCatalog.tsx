@@ -100,16 +100,16 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
           const montoTotal = product.precio_venta_sugerido * 1;
           const puedeComprar = fondoDisponible >= montoTotal && product.stock_disponible > 0;
           
-          // Verificar si ya tiene este producto (activo o pendiente)
-          const yaComprado = investments?.some((inv: any) => 
-            inv.productId === product.id && 
-            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || !inv.pagado)
+          // Verificar si ya tiene este producto (activo, pendiente o pagado)
+          const yaComprado = investments?.some((inv: any) =>
+            inv.productId === product.id &&
+            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || inv.estado === 'vendido_completo' || !inv.pagado)
           );
-          
+
           // Obtener el estado del producto si ya fue comprado
-          const investmentStatus = investments?.find((inv: any) => 
-            inv.productId === product.id && 
-            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || !inv.pagado)
+          const investmentStatus = investments?.find((inv: any) =>
+            inv.productId === product.id &&
+            (inv.estado === 'activo' || inv.estado === 'vendido_parcial' || inv.estado === 'vendido_completo' || !inv.pagado)
           );
           
           return (
