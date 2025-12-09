@@ -487,10 +487,10 @@ export const getCollectorStores = async (req: AuthRequest, res: Response) => {
       const allSalesReports = client.investments.flatMap(inv => inv.salesReports);
       const totalSales = allSalesReports.reduce((sum, sale) => sum + Number(sale.monto_total_venta), 0);
       
-      // Obtener ventas recientes ordenadas por fecha
+      // Obtener ventas recientes ordenadas por fecha (últimas 10)
       const recentSales = allSalesReports
         .sort((a, b) => new Date(b.fecha_venta || b.createdAt || 0).getTime() - new Date(a.fecha_venta || a.createdAt || 0).getTime())
-        .slice(0, 3);
+        .slice(0, 10);
 
       return {
         cliente: {
