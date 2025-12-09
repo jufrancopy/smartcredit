@@ -383,15 +383,15 @@ export const getClientProducts = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
-    // Obtener inversiones activas del cliente con productos SmartCredit 
+    // Obtener inversiones activas del cliente con productos SmartCredit
     // (pagadas completamente O aprobadas con saldo pendiente)
     const investments = await prisma.investment.findMany({
-      where: { 
+      where: {
         userId: client.id,
-        estado: { in: ['activo', 'vendido_parcial'] },
+        estado: { in: ['activo', 'vendido_parcial', 'vendido_completo'] },
         OR: [
           { pagado: true }, // Productos pagados completamente
-          { 
+          {
             AND: [
               { tipo_pago: 'microcredito' }, // Consignaciones
               { pagado: false }, // Con saldo pendiente
