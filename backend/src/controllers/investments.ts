@@ -1033,6 +1033,81 @@ export const requestRestock = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Arreglar inversiones pagadas sin sales reports automáticos
+export const fixPaidInvestmentsWithoutSalesReports = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    // Buscar inversiones pagadas completamente que no tienen sales reports
+    const investmentsWithoutSalesReports = await prisma.investment.findMany({
+      where: {
+        pagado: true,
+        tipo_pago: 'microcredito',
+        estado: { in: ['activo', 'vendido_completo'] }
+      },
+      include: {
+        salesReports: true,
+        product: true,
+        user: true
+      }
+    });
+
+    const investmentsToFix = investmentsWithoutSalesReports.filter(inv => inv.salesReports.length === 0);
+
+    let fixed = 0;
+
+    for (const investment of investmentsToFix) {
+      // Calcular la cantidad "vendida" (toda)
+      const cantidadVendida = investment.cantidad_comprada;
+      const precioVenta = investment.precio_reventa_cliente || investment.precio_unitario;
+      const montoTotalVenta = Number(cantidadVendida) * precioVenta;
+      const gananciaGenerada = montoTotalVenta - investment.monto_total;
+
+      // Crear sales report automático
+      await prisma.salesReport.create({
+        data: {
+          userId: investment.userId,
+          investmentId: investment.id,
+          cantidad_vendida: cantidadVendida,
+          precio_venta: precioVenta,
+          monto_total_venta: montoTotalVenta,
+          ganancia_generada: gananciaGenerada,
+          fecha_venta: investment.pagado ? investment.updatedAt : new Date(),
+          verificado: true
+        }
+      });
+
+      // Cambiar estado a vendido_completo si no lo está
+      if (investment.estado !== 'vendido_completo') {
+        await prisma.investment.update({
+          where: { id: investment.id },
+          data: { estado: 'vendido_completo' }
+        });
+      }
+
+      // Agregar ganancia al fondo del usuario
+      await prisma.user.update({
+        where: { id: investment.userId },
+        data: {
+          fondo_acumulado: { increment: gananciaGenerada }
+        }
+      });
+
+      fixed++;
+    }
+
+    res.json({
+      message: `Se arreglaron ${fixed} inversiones pagadas sin sales reports`,
+      fixed: fixed
+    });
+  } catch (error) {
+    console.error('Error fixing paid investments:', error);
+    res.status(500).json({ error: 'Error al arreglar inversiones' });
+  }
+};
+
 // ADMIN/COBRADOR: Obtener solicitudes de restock
 export const getRestockRequests = async (req: AuthRequest, res: Response) => {
   try {
