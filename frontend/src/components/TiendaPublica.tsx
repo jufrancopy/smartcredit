@@ -132,11 +132,14 @@ const TiendaPublica: React.FC = () => {
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-green-600">
+                      <span className={`text-lg font-bold ${product.disponible ? 'text-green-600' : 'text-gray-600'}`}>
                         {product.precio_cliente.toLocaleString('es-PY')} Gs
                       </span>
-                      <span className="text-sm text-gray-500">
-                        {product.cantidad_disponible} {product.unidad}s disponibles
+                      <span className={`text-sm ${product.disponible ? 'text-gray-500' : 'text-orange-600 font-semibold'}`}>
+                        {product.disponible
+                          ? `${product.cantidad_disponible} ${product.unidad}s disponibles`
+                          : 'Agotado temporalmente - Próximamente disponible'
+                        }
                       </span>
                     </div>
                     
