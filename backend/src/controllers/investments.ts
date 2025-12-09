@@ -683,10 +683,10 @@ export const getApprovedConsignments = async (req: AuthRequest, res: Response) =
     }
 
     const approvedInvestments = await prisma.investment.findMany({
-      where: { 
+      where: {
         tipo_pago: 'microcredito',
         fecha_limite_pago: null, // Aprobadas
-        estado: { in: ['activo', 'vendido_parcial'] }
+        estado: { in: ['activo', 'vendido_parcial', 'vendido_completo'] }
       },
       include: {
         user: { select: { id: true, nombre: true, apellido: true, whatsapp: true } },
