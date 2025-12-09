@@ -271,7 +271,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ userId, fondoDisponible
                 </div>
                 
                 {/* Lógica de botones según estado del producto y pago */}
-                {investmentStatus && investmentStatus.pagado && product.stock_disponible === 0 ? (
+                {investmentStatus && investmentStatus.pagado ? (
                   <div className="space-y-2">
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
                       <span className="text-green-800 font-semibold text-sm">✅ Producto Pagado Completamente</span>
