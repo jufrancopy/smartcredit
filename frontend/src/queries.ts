@@ -865,6 +865,50 @@ export const useGetRestockRequests = () => {
   });
 };
 
+// Approve restock request
+export const useApproveRestock = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { requestId: number }) => {
+      const res = await fetch(`${API_URL}/investments/approve-restock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al aprobar solicitud de restock');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
+// Reject restock request
+export const useRejectRestock = (options?: UseMutationOptions<any, Error, any>) => {
+  return useMutation({
+    mutationFn: async (data: { requestId: number }) => {
+      const res = await fetch(`${API_URL}/investments/reject-restock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al rechazar solicitud de restock');
+      }
+      return res.json();
+    },
+    ...options,
+  });
+};
+
 export const downloadLoanPDF = async (loanId: number) => {
   try {
     const res = await fetch(`${API_URL}/pdf/loan/${loanId}`, {

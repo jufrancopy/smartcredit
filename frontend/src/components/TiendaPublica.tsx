@@ -47,6 +47,7 @@ const TiendaPublica: React.FC = () => {
   }
 
   const { client, products } = data;
+  const availableProducts = products.filter((product: any) => product.disponible);
   const template = client.tienda_template || 'clasica';
 
   const templates = {
@@ -100,9 +101,9 @@ const TiendaPublica: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        {products.length > 0 ? (
+        {availableProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product: any) => (
+            {availableProducts.map((product: any) => (
               <div key={product.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden">
                 {product.imagen_url && (
                   <div className="h-48 bg-gray-200 overflow-hidden">

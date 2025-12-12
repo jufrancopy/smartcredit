@@ -1130,3 +1130,76 @@ export const getRestockRequests = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+// ADMIN/COBRADOR: Aprobar solicitud de restock
+export const approveRestock = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { requestId } = req.body;
+
+    const restockRequest = await prisma.restockRequest.findUnique({
+      where: { id: requestId },
+      include: { product: true }
+    });
+
+    if (!restockRequest) {
+      return res.status(404).json({ error: 'Solicitud de restock no encontrada' });
+    }
+
+    if (restockRequest.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+    }
+
+    // Aquí puedes agregar lógica adicional como:
+    // - Aumentar stock del producto
+    // - Notificar al cliente
+    // - Crear una inversión automática
+
+    // Por ahora solo marcar como aprobada
+    const updatedRequest = await prisma.restockRequest.update({
+      where: { id: requestId },
+      data: { estado: 'aprobado' }
+    });
+
+    res.json({ message: 'Solicitud de restock aprobada', request: updatedRequest });
+  } catch (error) {
+    console.error('Error al aprobar solicitud de restock:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// ADMIN/COBRADOR: Rechazar solicitud de restock
+export const rejectRestock = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.userRole !== 'admin' && req.userRole !== 'cobrador') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    const { requestId } = req.body;
+
+    const restockRequest = await prisma.restockRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!restockRequest) {
+      return res.status(404).json({ error: 'Solicitud de restock no encontrada' });
+    }
+
+    if (restockRequest.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+    }
+
+    const updatedRequest = await prisma.restockRequest.update({
+      where: { id: requestId },
+      data: { estado: 'rechazado' }
+    });
+
+    res.json({ message: 'Solicitud de restock rechazada', request: updatedRequest });
+  } catch (error) {
+    console.error('Error al rechazar solicitud de restock:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};

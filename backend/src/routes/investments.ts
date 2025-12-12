@@ -57,6 +57,8 @@ import {
   getProductPayments,
   requestRestock,
   getRestockRequests,
+  approveRestock,
+  rejectRestock,
   fixPaidInvestmentsWithoutSalesReports
 } from '../controllers/investments';
 
@@ -96,6 +98,8 @@ router.post('/cancel-investment', authenticateToken, cancelInvestment);
 router.get('/product-payments', authenticateToken, getProductPayments);
 router.post('/request-restock', authenticateToken, requestRestock);
 router.get('/restock-requests', authenticateToken, getRestockRequests);
+router.post('/approve-restock', authenticateToken, approveRestock);
+router.post('/reject-restock', authenticateToken, rejectRestock);
 router.post('/fix-paid-investments', authenticateToken, fixPaidInvestmentsWithoutSalesReports);
 // router.post('/fix-investment-prices', authenticateToken, fixInvestmentPrices); // Endpoint temporal - ya no necesario
 

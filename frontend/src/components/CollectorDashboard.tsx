@@ -6,7 +6,7 @@ import StoreMonitor from './StoreMonitor';
 import ConsignmentManager from './ConsignmentManager';
 import ConsignmentTracking from './ConsignmentTracking';
 import PurchaseTracking from './PurchaseTracking';
-import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF, useGetProductPayments, useGetRestockRequests } from '../queries';
+import { useGetLoans, useConfirmPayment, useDeletePayment, downloadLoanPDF, useGetProductPayments, useGetRestockRequests, useApproveRestock, useRejectRestock } from '../queries';
 import '../styles/animations.css';
 
 // Interfaz para el calendario de pagos elegante
@@ -878,7 +878,9 @@ interface InstallmentForCollector extends Installment {
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
   const { data: productPayments } = useGetProductPayments();
-  const { data: restockRequests } = useGetRestockRequests();
+  const { data: restockRequests, refetch: refetchRestockRequests } = useGetRestockRequests();
+  const approveRestockMutation = useApproveRestock();
+  const rejectRestockMutation = useRejectRestock();
   const confirmPaymentMutation = useConfirmPayment();
   const deletePaymentMutation = useDeletePayment();
 
@@ -1461,11 +1463,45 @@ const CollectorDashboard: React.FC = () => {
                       </div>
                       
                       <div className="mt-4 flex gap-2">
-                        <button className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-                          ✅ Reabastecer
+                        <button
+                          onClick={() => {
+                            approveRestockMutation.mutate(
+                              { requestId: request.id },
+                              {
+                                onSuccess: () => {
+                                  toast.success('Solicitud de restock aprobada');
+                                  refetchRestockRequests();
+                                },
+                                onError: (error) => {
+                                  toast.error('Error al aprobar la solicitud');
+                                }
+                              }
+                            );
+                          }}
+                          disabled={approveRestockMutation.isLoading}
+                          className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                        >
+                          {approveRestockMutation.isLoading ? '⏳ Procesando...' : '✅ Reabastecer'}
                         </button>
-                        <button className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors">
-                          ❌ Rechazar
+                        <button
+                          onClick={() => {
+                            rejectRestockMutation.mutate(
+                              { requestId: request.id },
+                              {
+                                onSuccess: () => {
+                                  toast.success('Solicitud de restock rechazada');
+                                  refetchRestockRequests();
+                                },
+                                onError: (error) => {
+                                  toast.error('Error al rechazar la solicitud');
+                                }
+                              }
+                            );
+                          }}
+                          disabled={rejectRestockMutation.isLoading}
+                          className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors disabled:opacity-50"
+                        >
+                          {rejectRestockMutation.isLoading ? '⏳ Procesando...' : '❌ Rechazar'}
                         </button>
                       </div>
                     </div>
