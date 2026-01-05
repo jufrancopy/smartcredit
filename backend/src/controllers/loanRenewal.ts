@@ -151,30 +151,15 @@ export const createRenewalLoan = async (req: AuthRequest, res: Response) => {
 
       await tx.installment.createMany({ data: installments });
 
-      // 3. Cerrar préstamos anteriores y marcar como pagados
+      // 3. Cerrar préstamos anteriores SIN marcar cuotas como pagadas
       for (const loan of loansToClose) {
         await tx.loan.update({
           where: { id: loan.id },
           data: { estado: 'finiquitado' }
         });
-
-        // Marcar todas las cuotas pendientes como pagadas
-        const pendingInstallments = await tx.installment.findMany({
-          where: { 
-            loanId: loan.id,
-            status: { not: 'pagado' }
-          }
-        });
         
-        for (const installment of pendingInstallments) {
-          await tx.installment.update({
-            where: { id: installment.id },
-            data: { 
-              monto_pagado: installment.monto_expected,
-              status: 'pagado'
-            }
-          });
-        }
+        // NO marcar cuotas como pagadas - mantener el estado real
+        // Las cuotas pendientes quedan como están para registro histórico
       }
 
       return newLoan;

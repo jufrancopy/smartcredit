@@ -877,6 +877,9 @@ interface InstallmentForCollector extends Installment {
 
 const CollectorDashboard: React.FC = () => {
   const { data: loans, isLoading, isError, refetch } = useGetLoans();
+  
+  // Filtrar solo préstamos activos para el cobrador
+  const activeLoans = loans?.filter((loan: any) => loan.estado === 'activo') || [];
   const { data: productPayments } = useGetProductPayments();
   const { data: restockRequests, refetch: refetchRestockRequests } = useGetRestockRequests();
   const approveRestockMutation = useApproveRestock();
@@ -1029,7 +1032,7 @@ const CollectorDashboard: React.FC = () => {
       }
       
       // Buscar el loan que contiene estos installments
-      const loanWithInstallments = loans?.find((loan: any) => 
+      const loanWithInstallments = activeLoans?.find((loan: any) => 
         loan.installments.some((inst: any) => 
           installments.some(targetInst => targetInst.id === inst.id)
         )
@@ -1052,12 +1055,12 @@ const CollectorDashboard: React.FC = () => {
   };
 
   const debtors: Debtor[] = useMemo(() => {
-    if (!loans) return [];
+    if (!activeLoans) return [];
     
     // Crear un debtor por cada préstamo activo (no agrupar por usuario)
     const debtorsList: Debtor[] = [];
     
-    loans.forEach((loan: any) => {
+    activeLoans.forEach((loan: any) => {
       let totalPagadoEstePrestamo = 0;
       loan.installments.forEach((inst: any) => {
         totalPagadoEstePrestamo += Number(inst.monto_pagado) || 0;
@@ -1109,7 +1112,7 @@ const CollectorDashboard: React.FC = () => {
     });
     
     return debtorsList;
-  }, [loans]);
+  }, [activeLoans]);
 
   if (isLoading) {
     return (
@@ -1134,7 +1137,7 @@ const CollectorDashboard: React.FC = () => {
   }
 
   const totalAmount = debtors.reduce((sum, d) => sum + d.amountDue, 0);
-  const totalLoanedAmount = loans?.reduce((sum: number, loan: any) => sum + loan.monto_principal, 0) || 0;
+  const totalLoanedAmount = activeLoans?.reduce((sum: number, loan: any) => sum + loan.monto_principal, 0) || 0;
   const overdueCount = debtors.reduce((count, d) => 
     count + d.installments.filter(i => i.status === 'vencido').length, 0
   );
@@ -1366,7 +1369,7 @@ const CollectorDashboard: React.FC = () => {
               
               {/* Sub-pestañas para historial */}
               <HistoryTabs 
-                loans={loans}
+                loans={activeLoans}
                 productPayments={productPayments}
                 accumulatedEarnings={accumulatedEarnings}
                 COLLECTOR_PROFIT_PERCENTAGE={COLLECTOR_PROFIT_PERCENTAGE}
